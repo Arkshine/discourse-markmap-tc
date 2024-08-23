@@ -144,7 +144,9 @@ export default class MarkmapManager extends Service {
 
     if (this.previousSVGInComposer[handler]) {
       instance = this.markmapInstance.lookup(handler);
-    } else {
+    }
+
+    if (!instance) {
       instance = this.markmapInstance.create(handler, svg, options);
     }
 
@@ -182,13 +184,20 @@ export default class MarkmapManager extends Service {
 
     this.markmapInstance.insertToolbar(handler, svgWrapper, attrs);
 
-    this.#handleFeatures({ wrapElement, svg, handler, isPreview, attrs });
+    this.#handleFeatures({
+      wrapElement,
+      svg,
+      handler,
+      isPreview,
+      options,
+      attrs,
+    });
   }
 
   /**
    * Fixes a few Discourse features.
    */
-  #handleFeatures({ wrapElement, svg, handler, isPreview, attrs }) {
+  #handleFeatures({ wrapElement, svg, handler, isPreview, options, attrs }) {
     // Delay a little to process after others components / plugins.
     schedule("afterRender", async () => {
       if (!isPreview) {
@@ -201,17 +210,24 @@ export default class MarkmapManager extends Service {
         this.#handleMath({ wrapElement, svg }),
         this.#handleMermaid({ wrapElement, svg }),
       ]).finally(() => {
-        //this.appEvents.trigger("markmap:rendered", { wrapElement, svg });
-
         this.markmapInstance.refreshTransform(
           wrapElement,
           this.#lastPosition[handler]
         );
 
         this.#handleMermaid({ wrapElement, svg, updateStyle: true });
-      });
 
-      next(() => {});
+        later(
+          this,
+          () =>
+            this.appEvents.trigger("markmap:rendered", {
+              wrapElement,
+              svg,
+              options,
+            }),
+          options.duration
+        );
+      });
     });
 
     if (isPreview) {
@@ -380,7 +396,7 @@ export default class MarkmapManager extends Service {
   /**
    * Handles the MathJax rendering in the SVG foreign element.
    */
-  async #handleMath({ wrapElement, svg }) {
+  async #handleMath({ wrapElement /*svg*/ }) {
     return new Promise((resolve) => {
       if (
         !this.siteSettings.discourse_math_enabled ||
