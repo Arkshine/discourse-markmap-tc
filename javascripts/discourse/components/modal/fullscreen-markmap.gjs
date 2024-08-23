@@ -13,6 +13,9 @@ export default class FullscreenMarkmap extends Component {
 
   @action
   closeModal() {
+    const { wrapElement } = this.args.model;
+    this.markmapInstance.lookup(wrapElement.dataset.handler)?.fit();
+
     this.args.closeModal();
   }
 
