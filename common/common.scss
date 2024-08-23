@@ -1,0 +1,238 @@
+.d-modal {
+  &__container {
+    .d-modal.fullscreen-markmap-modal.-max & {
+      max-width: 100vw;
+      min-height: 100vh;
+    }
+  }
+}
+
+.cooked,
+.d-editor-preview,
+.fullscreen-markmap-modal {
+  .markmap-wrapper {
+    position: relative;
+  }
+
+  .d-wrap[data-wrap="markmap"] {
+    position: fixed;
+    left: -9999px;
+    visibility: hidden;
+
+    &:hover {
+      outline: 4px solid var(--tertiary-very-low);
+      outline-offset: 6px;
+    }
+  }
+
+  .insert-markmap-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  svg {
+    .markmap {
+      &-foreign {
+        overflow-x: auto;
+
+        .md-table {
+          margin: 0;
+          overflow: hidden;
+
+          font-size: 0.99em;
+
+          tbody tr:last-child {
+            border-bottom: none;
+          }
+
+          &:hover {
+            border-radius: initial;
+            box-shadow: none;
+          }
+        }
+
+        table {
+          line-height: normal;
+        }
+
+        table,
+        th,
+        td {
+          border: none;
+        }
+
+        code {
+          padding-top: 0;
+          padding-bottom: 0;
+
+          color: var(--primary-very-high);
+          background: var(--hljs-bg);
+        }
+
+        pre {
+          margin: 0;
+
+          > code {
+            display: block;
+            padding: 0.35em 0.5em;
+          }
+        }
+
+        [data-code-wrap="mermaid"]:not([data-processed]) {
+          > code {
+            display: none;
+          }
+
+          > code + .spinner {
+            position: absolute;
+            top: 50%;
+            left: 100px;
+            transform: translateY(-50%), translateX(100px);
+          }
+        }
+
+        blockquote {
+          padding: 6px 12px 3px 12px;
+          margin-top: 10px;
+        }
+
+        .image-wrapper {
+          padding-bottom: 0;
+        }
+
+        .lightbox-wrapper {
+          img:not(.thumbnail):not(.ytp-thumbnail-image):not(.emoji):not(
+              .avatar
+            ):not(.cooked):not(.lazyloaded) {
+            object-fit: contain;
+            object-position: bottom;
+
+            height: revert-layer;
+          }
+        }
+
+        .mjx-chtml {
+          font-size: 113% !important;
+        }
+
+        .katex {
+          font-size: 1em;
+        }
+
+        [data-code-wrap="mermaid"] .markdown-node-label p {
+          margin-block-start: 1em;
+          margin-block-end: 1em;
+          margin-inline-start: 0px;
+          margin-inline-end: 0px;
+        }
+      }
+    }
+  }
+}
+
+.markmap {
+  --markmap-max-width: none;
+  --markmap-a-color: #0097e6;
+  --markmap-a-hover-color: #00a8ff;
+  --markmap-code-bg: #f0f0f0;
+  --markmap-code-color: #555;
+  --markmap-highlight-bg: #ffeaa7;
+  --markmap-table-border: 1px solid currentColor;
+  --markmap-font: 300 16px/20px sans-serif;
+  --markmap-circle-open-bg: #fff;
+  --markmap-text-color: #333;
+
+  font: var(--markmap-font);
+  color: var(--markmap-text-color);
+
+  height: 100%;
+
+  &-link {
+    fill: none;
+  }
+
+  &-node {
+    > circle {
+      cursor: pointer;
+    }
+  }
+
+  &-foreign {
+    display: inline-block;
+
+    p {
+      margin: 0;
+    }
+
+    a {
+      color: var(--markmap-a-color);
+      &:hover {
+        color: var(--markmap-a-hover-color);
+      }
+    }
+
+    font-weight: normal;
+
+    /*code {
+      color: var(--primary-very-high);
+      background: var(--hljs-bg);
+    }
+
+    blockquote {
+      padding: 10px;
+      margin-block-start: 0;
+      margin-block-end: 0;
+    }*/
+
+    /*del {
+      text-decoration: line-through;
+    }
+
+    em {
+      font-style: italic;
+    }
+
+    strong {
+      font-weight: bold;
+    }
+
+    mark {
+      background: var(--markmap-highlight-bg);
+    }*/
+
+    /*
+    table,
+    th,
+    td {
+      border-collapse: collapse;
+      border: var(--markmap-table-border);
+    }*/
+
+    img {
+      display: inline-block;
+    }
+
+    svg {
+      fill: currentColor;
+    }
+  }
+
+  &-foreign-testing-max {
+    max-width: var(--markmap-max-width);
+
+    img {
+      max-width: var(--markmap-max-width);
+      max-height: none;
+    }
+  }
+}
+
+.markmap-dark .markmap {
+  --markmap-code-bg: #1a1b26;
+  --markmap-code-color: #ddd;
+  --markmap-circle-open-bg: #444;
+  --markmap-text-color: #eee;
+}
+
+@import "toolbar";

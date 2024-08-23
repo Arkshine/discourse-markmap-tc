@@ -1,3 +1,27 @@
 en:
   theme_metadata:
-    description: ''
+    description: ""
+  insert_markmap: "Insert Markmap"
+  toolbar:
+    zoom_in: "Zoom In"
+    zoom_out: "Zoom Out"
+    fit: "Fit window size"
+    recurse: "Toggle recursively"
+    fullscreen: "Fullscreen"
+    show_content: "Show content"
+    show_markmap: "Show Markmap"
+  modal:
+    actions:
+      insert: "Insert"
+      cancel: "Cancel"
+    insert:
+      title: "Insert Markmap"
+      form:
+        title:
+          label: "Title"
+          description: "The title of the Markmap."
+        auto_fit:
+          label: "Auto Fit"
+          description: "Automatically fit the Markmap to the window size."
+    fullscreen:
+      title: "View Markmap"

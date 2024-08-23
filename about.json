@@ -1,5 +1,5 @@
 {
-  "name": "discourse-markmap/",
+  "name": "Discourse Markmap",
   "component": true,
   "authors": "Arkshine",
   "about_url": "TODO: Put your theme's public repo or Meta topic URL here",
@@ -9,7 +9,12 @@
   "minimum_discourse_version": null,
   "maximum_discourse_version": null,
   "assets": {
+    "d3_js": "./assets/d3@7.min.js",
+    "d3_flextree_js": "./assets/d3-flextree.min.js",
+    "markmap_view_js": "./assets/markmap-view.min.js",
+    "icons-sprite": "./assets/custom-icons.svg"
   },
   "modifiers": {
+    "svg_icons": []
   }
 }
