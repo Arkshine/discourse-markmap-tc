@@ -118,7 +118,7 @@ export default class MarkmapInstance extends Service {
   async refreshTransform(element, lastPosition = null) {
     const instance = this.lookup(element.dataset.handler);
     const options = this.deriveOptions(element.dataset);
-    const { duration } = options;
+    //const { duration } = options;
 
     instance.setData(this.transformHtml(element), {
       ...options,
@@ -199,7 +199,8 @@ export default class MarkmapInstance extends Service {
 
             modalElement.requestFullscreen();
 
-            modalElement.addEventListener("fullscreenerror", (event) => {
+            modalElement.addEventListener("fullscreenerror", (/*event*/) => {
+              // eslint-disable-next-line no-console
               console.error("an error occurred changing into fullscreen");
             });
 

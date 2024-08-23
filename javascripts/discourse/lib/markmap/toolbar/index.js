@@ -108,6 +108,7 @@ class Toolbar {
 
           const data = this.registry[item];
           if (!data) {
+            // eslint-disable-next-line no-console
             console.warn(`[markmap-toolbar] ${item} not found`);
           }
           return { ...data, type: "icon" };
