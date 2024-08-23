@@ -49,7 +49,7 @@ export default class InsertMarkmap extends Component {
     }
 
     this.args.model.insertMarkmap(
-      "\n[wrap=markmap" + options.join(" ") + "]\n",
+      "\n[wrap=markmap " + options.join(" ") + "]\n",
       "\n[/wrap]\n",
       "markmap_sample",
       {
