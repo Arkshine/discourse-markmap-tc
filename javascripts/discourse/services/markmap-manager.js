@@ -1,28 +1,13 @@
 import { later, next, schedule } from "@ember/runloop";
 import Service, { service } from "@ember/service";
-import { htmlSafe } from "@ember/template";
-import SpreadsheetEditor from "discourse/components/modal/spreadsheet-editor";
-import { ajax } from "discourse/lib/ajax";
-import { popupAjaxError } from "discourse/lib/ajax-error";
 import lightbox, { setupLightboxes } from "discourse/lib/lightbox";
 import {
   LIGHTBOX_APP_EVENT_NAMES,
   SELECTORS,
 } from "discourse/lib/lightbox/constants";
 import loadScript from "discourse/lib/load-script";
-import { parseAsync } from "discourse/lib/text";
-import { tokenRange } from "discourse/lib/utilities";
-import discourseDebounce from "discourse-common/lib/debounce";
-import I18n from "discourse-i18n";
-import {
-  cleanupTableEditButtons,
-  generateSpreadsheetModal,
-} from "../lib/discourse/table";
+import { generateSpreadsheetModal } from "../lib/discourse/table";
 import { walkTree } from "../lib/markmap/common";
-import { clsActive, clsToolbarItem, Toolbar } from "../lib/markmap/toolbar";
-import { Transformer } from "../lib/markmap/transform";
-import { Markmap } from "../lib/markmap/view";
-import { defaultOptions } from "../lib/markmap/view/constants";
 
 export default class MarkmapManager extends Service {
   @service modal;
@@ -34,7 +19,6 @@ export default class MarkmapManager extends Service {
   previousSVGInComposer = {};
   #foldNodesState = {};
   #lastPosition = {};
-  #mathJaxHook = null;
 
   init() {
     super.init();

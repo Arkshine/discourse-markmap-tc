@@ -1,19 +1,6 @@
-import { later, next, schedule } from "@ember/runloop";
+import { later } from "@ember/runloop";
 import Service, { service } from "@ember/service";
-import { htmlSafe } from "@ember/template";
-import SpreadsheetEditor from "discourse/components/modal/spreadsheet-editor";
-import { ajax } from "discourse/lib/ajax";
-import { popupAjaxError } from "discourse/lib/ajax-error";
-import { setupLightboxes } from "discourse/lib/lightbox";
-import {
-  LIGHTBOX_APP_EVENT_NAMES,
-  SELECTORS,
-} from "discourse/lib/lightbox/constants";
-import loadScript from "discourse/lib/load-script";
-import { parseAsync } from "discourse/lib/text";
-import { tokenRange } from "discourse/lib/utilities";
 import discourseDebounce from "discourse-common/lib/debounce";
-import { iconHTML, iconNode } from "discourse-common/lib/icon-library";
 import I18n from "discourse-i18n";
 import FullscreenMarkmap from "../components/modal/fullscreen-markmap";
 import { clsActive, clsToolbarItem, Toolbar } from "../lib/markmap/toolbar";

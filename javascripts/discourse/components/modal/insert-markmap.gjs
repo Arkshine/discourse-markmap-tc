@@ -1,16 +1,12 @@
 import Component from "@glimmer/component";
 import { tracked } from "@glimmer/tracking";
-import { Input } from "@ember/component";
 import { on } from "@ember/modifier";
 import { action } from "@ember/object";
-import didInsert from "@ember/render-modifiers/modifiers/did-insert";
 import { service } from "@ember/service";
 import DButton from "discourse/components/d-button";
 import DModal from "discourse/components/d-modal";
 import DToggleSwitch from "discourse/components/d-toggle-switch";
 import TextField from "discourse/components/text-field";
-import themeI18n from "discourse/helpers/theme-i18n";
-import themeSetting from "discourse/helpers/theme-setting";
 import i18n from "discourse-common/helpers/i18n";
 
 export default class InsertMarkmap extends Component {

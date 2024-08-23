@@ -1,30 +1,6 @@
-import { getOwner } from "@ember/application";
-import { later, next, schedule } from "@ember/runloop";
-import FullscreenTableModal from "discourse/components/modal/fullscreen-table";
-import SpreadsheetEditor from "discourse/components/modal/spreadsheet-editor";
-import { ajax } from "discourse/lib/ajax";
-import { popupAjaxError } from "discourse/lib/ajax-error";
-import lightbox from "discourse/lib/lightbox";
-import {
-  LIGHTBOX_APP_EVENT_NAMES,
-  SELECTORS,
-} from "discourse/lib/lightbox/constants";
-import loadScript from "discourse/lib/load-script";
 import { withPluginApi } from "discourse/lib/plugin-api";
-import { parseAsync } from "discourse/lib/text";
-import { tokenRange } from "discourse/lib/utilities";
-import discourseDebounce from "discourse-common/lib/debounce";
-import { getOwnerWithFallback } from "discourse-common/lib/get-owner";
-import I18n from "discourse-i18n";
-import FullscreenMarkmap from "../components/modal/fullscreen-markmap";
 import InsertMarkmap from "../components/modal/insert-markmap";
 import { cleanupTableEditButtons } from "../lib/discourse/table";
-//import { noop } from "../../lib/markmap/common";
-import { clsActive, clsToolbarItem, Toolbar } from "../lib/markmap/toolbar";
-import { Transformer } from "../lib/markmap/transform";
-import { Markmap } from "../lib/markmap/view";
-//import { DEBOUNCE_DELAY } from "../lib/markmap/view/constants";
-import { deriveOptions } from "../lib/markmap/view/util";
 
 async function initializeMarkmap(api) {
   const modalService = api.container.lookup("service:modal");
