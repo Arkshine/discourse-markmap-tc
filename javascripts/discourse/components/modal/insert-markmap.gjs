@@ -8,6 +8,7 @@ import DModal from "discourse/components/d-modal";
 import DToggleSwitch from "discourse/components/d-toggle-switch";
 import TextField from "discourse/components/text-field";
 import i18n from "discourse-common/helpers/i18n";
+import { defaultOptions } from "../../lib/markmap/view/constants";
 
 export default class InsertMarkmap extends Component {
   @service siteSettings;
@@ -16,7 +17,7 @@ export default class InsertMarkmap extends Component {
   @service markmapInstance;
 
   @tracked fieldTitle = "";
-  @tracked fieldAutoFit = false;
+  @tracked fieldAutoFit = defaultOptions.autoFit;
 
   keyDown(e) {
     if (e.keyCode === 13) {
