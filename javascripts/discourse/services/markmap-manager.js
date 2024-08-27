@@ -20,11 +20,6 @@ export default class MarkmapManager extends Service {
   #foldNodesState = {};
   #lastPosition = {};
 
-  init() {
-    super.init();
-    this.#handleDarkmode();
-  }
-
   applyMarkmaps(element, key = "composer", attrs = {}) {
     const markmaps = element.querySelectorAll('[data-wrap="markmap"]');
 
@@ -623,47 +618,6 @@ export default class MarkmapManager extends Service {
       });
 
       Promise.all(promises).finally(resolve);
-    });
-  }
-
-  /**
-   * Handles the dark mode in the SVG foreign element.
-   */
-  #handleDarkmode(svgWrapper) {
-    if (svgWrapper) {
-      if (
-        getComputedStyle(document.body)
-          .getPropertyValue("--scheme-type")
-          .trim() === "dark"
-      ) {
-        svgWrapper.classList.add("markmap-dark");
-      }
-
-      return;
-    }
-
-    const darkScheme =
-      document.querySelector("link.dark-scheme") ||
-      document.querySelector("link#cs-preview-dark");
-
-    if (!darkScheme) {
-      return;
-    }
-
-    const observer = new MutationObserver((mutations) => {
-      if (mutations.length) {
-        document.querySelectorAll(".markmap-wrapper").forEach((element) => {
-          element.classList.toggle(
-            "markmap-dark",
-            mutations[0].target.media === "all"
-          );
-        });
-      }
-    });
-
-    observer.observe(darkScheme, {
-      attributes: true,
-      attributeFilter: ["media"],
     });
   }
 
