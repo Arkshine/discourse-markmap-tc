@@ -7,22 +7,22 @@
         <circle cx="38" cy="38" r="4" stroke="currentColor" stroke-width="4"/>
         <path d="M34 38H22V10h12M14 24h20" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
-    <symbol id="zoom-in-markmap" fill="none">
+    <symbol id="zoom-in-markmap" viewBox="0 0 20 20" fill="none">
         <path fill="currentColor" d="M9 5v4H5v2h4v4h2v-4h4V9h-4V5z" />
     </symbol>
-    <symbol id="zoom-out-markmap" fill="none">
+    <symbol id="zoom-out-markmap" viewBox="0 0 20 20" fill="none">
         <path fill="currentColor" d="M5 9h10v2H5z" />
     </symbol>
-    <symbol id="fit-markmap" fill="none">
+    <symbol id="fit-markmap" viewBox="0 0 20 20" fill="none">
         <path fill="currentColor" d="M4 7h2V5h2v4H4zm0 6h2v2h2v-4H4zm12-6h-2V5h-2v4h4zm0 6h-2v2h-2v-4h4z" />
     </symbol>
-    <symbol id="recurse-markmap" fill="none">
+    <symbol id="recurse-markmap" viewBox="0 0 20 20" fill="none">
         <path fill="currentColor" d="M16 4H4v12h12V8H8v4h2v-2h4v4H6V6h10z" />
     </symbol>
     <symbol id="content-markmap" viewBox="0 0 24 24" fill="none">
         <path stroke="currentColor" stroke-width="2" d="M5 7h14M5 12h14M5 17h10"/>
     </symbol>
-    <symbol id="fullscreen-markmap" fill="none">
+    <symbol id="fullscreen-markmap" viewBox="0 0 20 20" fill="none">
         <path fill="currentColor" d="M4 9V5h4v2H6v2zm0 2v4h4v-2H6v-2zm12-2V5h-4v2h2v2zm0 2v4h-4v-2h2v-2z" />
     </symbol>
 </svg>
