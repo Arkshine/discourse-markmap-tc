@@ -84,8 +84,6 @@ export default class MarkmapManager extends Service {
       height: `${options.height}px` || "500px",
     });
 
-    this.#handleDarkmode(svgWrapper);
-
     wrapElement.parentElement.insertBefore(svgWrapper, wrapElement.nextSibling);
     wrapElement.setAttribute("aria-hidden", "true");
     wrapElement.dataset.index = index;
