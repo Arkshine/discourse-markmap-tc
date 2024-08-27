@@ -238,14 +238,12 @@ export default class MarkmapInstance extends Service {
 
         wrapper.style.display = "none";
 
-        wrapElement.style.position = "inherit";
+        wrapElement.style.position = "relative";
         wrapElement.style.visibility = "visible";
         wrapElement.style.left = "unset";
         wrapElement.querySelector(".mm-toolbar")?.remove();
 
         const toolbarContent = Toolbar.create(instance);
-        toolbarContent.el.style.position = "absolute";
-        toolbarContent.el.style.right = "0.5rem";
         wrapElement.insertBefore(toolbarContent.el, wrapElement.firstChild);
 
         toolbarContent.register({
@@ -267,8 +265,6 @@ export default class MarkmapInstance extends Service {
       },
     });
 
-    el.style.position = "absolute";
-    el.style.right = "0.65rem";
     wrapper.insertBefore(el, wrapper.firstChild);
 
     const items = ["zoomIn", "zoomOut", "fit", "recurse", "fullscreen"];
