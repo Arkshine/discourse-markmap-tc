@@ -12,34 +12,40 @@ export default class MarkmapInstance extends Service {
   @service modal;
 
   transformer = new Transformer();
-  instances = {};
-  renderCounts = {};
-  options = {};
+  instances = new Map();
+  renderCounts = new Map();
+  options = new Map();
 
   lookup(handler) {
-    return this.instances[handler];
+    return this.instances.get(handler);
   }
 
   create(handler, svg, options) {
     const instance = Markmap.create(svg, options);
 
-    this.instances[handler] = instance;
+    this.instances.set(handler, instance);
 
-    if (this.renderCounts[handler] === undefined) {
-      this.renderCounts[handler] = 0;
+    if (!this.renderCounts.has(handler)) {
+      this.renderCounts.set(handler, 0);
     }
 
     if (options !== null) {
-      this.options[handler] = options;
+      this.options.set(handler, options);
     }
 
-    ++this.renderCounts[handler];
+    this.renderCounts.set(handler, this.renderCounts.get(handler) + 1);
 
     return instance;
   }
 
+  clear() {
+    this.instances.clear();
+    this.renderCounts.clear();
+    this.options.clear();
+  }
+
   isFirstRender(handler) {
-    return this.renderCounts[handler] === 1;
+    return this.renderCounts.get(handler) === 1;
   }
 
   deriveOptions(options) {

@@ -5,6 +5,7 @@ import { cleanupTableEditButtons } from "../lib/discourse/table";
 async function initializeMarkmap(api) {
   const modalService = api.container.lookup("service:modal");
   const markmapManager = api.container.lookup("service:markmap-manager");
+  const markmapInstance = api.container.lookup("service:markmap-instance");
 
   // this is a hack as applySurround expects a top level
   // composer key, not possible from a theme
@@ -50,6 +51,11 @@ async function initializeMarkmap(api) {
 
     const attrs = helper?.widget.attrs || {};
     markmapManager.applyMarkmaps(element, key, attrs);
+  });
+
+  api.onPageChange(() => {
+    markmapManager.clear();
+    markmapInstance.clear();
   });
 
   api.cleanupStream(cleanupTableEditButtons);

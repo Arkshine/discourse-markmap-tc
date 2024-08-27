@@ -19,6 +19,12 @@ export default class MarkmapManager extends Service {
   #foldNodesState = {};
   #lastPosition = {};
 
+  clear() {
+    this.#previousSVGInComposer = {};
+    this.#foldNodesState = {};
+    this.#lastPosition = {};
+  }
+
   applyMarkmaps(element, key = "composer", attrs = {}) {
     const markmaps = element.querySelectorAll('[data-wrap="markmap"]');
 
