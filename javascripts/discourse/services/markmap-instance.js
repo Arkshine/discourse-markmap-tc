@@ -1,4 +1,4 @@
-import { later } from "@ember/runloop";
+import { later, next } from "@ember/runloop";
 import Service, { service } from "@ember/service";
 import discourseDebounce from "discourse-common/lib/debounce";
 import I18n from "discourse-i18n";
@@ -124,19 +124,19 @@ export default class MarkmapInstance extends Service {
   async refreshTransform(element, lastPosition = null) {
     const instance = this.lookup(element.dataset.handler);
     const options = this.deriveOptions(element.dataset);
-    //const { duration } = options;
+    const { duration } = options;
 
     instance.setData(this.transformHtml(element), {
       ...options,
-      //duration: 0 /* Avoid transition effect if we force a refresh */,
+      duration: 0 /* Avoid transition effect if we force a refresh */,
     });
 
     instance.fit(lastPosition);
-    /*next(() =>
+    next(() =>
       instance.setOptions({
         duration,
       })
-    );*/
+    );
   }
 
   insertToolbar(handler, wrapper, attrs = {}) {
