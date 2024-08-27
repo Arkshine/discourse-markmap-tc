@@ -64,12 +64,10 @@ export default class MarkmapManager extends Service {
       return;
     }
 
-    if (
-      isPreview &&
-      wrapElement.nextSibling?.nodeType === Node.ELEMENT_NODE &&
-      wrapElement.nextSibling.classList.contains("markmap-wrapper")
-    ) {
-      wrapElement.nextSibling.remove();
+    if (isPreview) {
+      wrapElement.parentElement
+        .querySelector(`.markmap-wrapper[data-index="${index}"]`)
+        ?.remove();
     }
 
     const options = this.markmapInstance.deriveOptions(wrapElement.dataset);
