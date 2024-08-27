@@ -15,8 +15,7 @@ export default class MarkmapManager extends Service {
   @service appEvents;
   @service markmapInstance;
 
-  lastMathResolve = {};
-  previousSVGInComposer = {};
+  #previousSVGInComposer = {};
   #foldNodesState = {};
   #lastPosition = {};
 
@@ -82,6 +81,7 @@ export default class MarkmapManager extends Service {
       index,
       width: "100%",
       height: `${options.height}px` || "500px",
+      isPreview,
     });
 
     wrapElement.parentElement.insertBefore(svgWrapper, wrapElement.nextSibling);
@@ -133,9 +133,9 @@ export default class MarkmapManager extends Service {
     isPreview,
     options,
   }) {
-    let instance;
+    let instance = null;
 
-    if (this.previousSVGInComposer[handler]) {
+    if (isPreview) {
       instance = this.markmapInstance.lookup(handler);
     }
 
@@ -172,7 +172,7 @@ export default class MarkmapManager extends Service {
     instance.fit(this.#lastPosition[handler]);
 
     if (isPreview) {
-      this.previousSVGInComposer[handler] = svg;
+      this.#previousSVGInComposer[handler] = svg;
     }
 
     this.markmapInstance.insertToolbar(handler, svgWrapper, attrs);
@@ -242,13 +242,17 @@ export default class MarkmapManager extends Service {
     }
   }
 
-  createWrapper({ handler, index, width, height }) {
+  createWrapper({ handler, index, width, height, isPreview }) {
     const svgWrapper = document.createElement("div");
     svgWrapper.classList.add("markmap-wrapper");
     svgWrapper.dataset.index = index;
     svgWrapper.dataset.handler = handler;
 
-    let svg = this.previousSVGInComposer[handler];
+    let svg;
+
+    if (isPreview) {
+      svg = this.#previousSVGInComposer[handler];
+    }
 
     if (!svg) {
       svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
