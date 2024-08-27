@@ -7,7 +7,7 @@ export const defaultOptions = {
   autoFit: true,
   duration: 500,
   embedGlobalCSS: true,
-  fitRatio: 0.95,
+  fitRatio: 0.9,
   maxWidth: 0,
   nodeMinHeight: 16,
   paddingX: 8,
