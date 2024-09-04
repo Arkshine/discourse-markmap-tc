@@ -65,7 +65,8 @@ export const defaultOptions = {
   selectorRules: defaultSelectorRules,
 };
 
-const MARKMAP_COMMENT_PREFIX = "markmap: ";
+const MARKMAP_COMMENT_REGEX =
+  /(?<comment>\/\/--\s*markmap:\s*(?<option>[^-\s]+)\s*--\/\/)/i;
 const SELECTOR_HEADING = /^h[1-6]$/;
 const SELECTOR_LIST = /^[uo]l$/;
 const SELECTOR_LIST_ITEM = /^li$/;
@@ -182,11 +183,13 @@ export function parseHtml(html, opts = {}) {
     const comments = [];
 
     $node = $node.filter((child) => {
-      if (child.nodeType === "comment") {
-        const data = child.data().trim();
-        if (data.startsWith(MARKMAP_COMMENT_PREFIX)) {
-          comments.push(data.slice(MARKMAP_COMMENT_PREFIX.length).trim());
-          return false;
+      if (child.nodeType === Node.TEXT_NODE) {
+        const result = MARKMAP_COMMENT_REGEX.exec(child.data);
+        if (result) {
+          child.nodeValue = child.nodeValue
+            .replace(result.groups.comment, "")
+            .trim();
+          comments.push(result.groups.option);
         }
       }
       return true;
