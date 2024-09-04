@@ -11,7 +11,6 @@ export default class MarkmapInstance extends Service {
   transformer = new Transformer();
   instances = new Map();
   renderCounts = new Map();
-  options = new Map();
 
   lookup(handler) {
     return this.instances.get(handler);
@@ -26,10 +25,6 @@ export default class MarkmapInstance extends Service {
       this.renderCounts.set(handler, 0);
     }
 
-    if (options !== null) {
-      this.options.set(handler, options);
-    }
-
     this.renderCounts.set(handler, this.renderCounts.get(handler) + 1);
 
     return instance;
@@ -38,7 +33,6 @@ export default class MarkmapInstance extends Service {
   clear() {
     this.instances.clear();
     this.renderCounts.clear();
-    this.options.clear();
   }
 
   isFirstRender(handler) {
@@ -107,15 +101,6 @@ export default class MarkmapInstance extends Service {
     });
 
     return root;
-  }
-
-  debouncedRefreshTransform(element, lastPosition = null) {
-    discourseDebounce(
-      this.refreshTransform.bind(this),
-      element,
-      lastPosition,
-      0
-    );
   }
 
   async refreshTransform(element, lastPosition = null) {
