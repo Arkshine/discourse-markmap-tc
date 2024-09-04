@@ -1,6 +1,7 @@
 import { withPluginApi } from "discourse/lib/plugin-api";
 import InsertMarkmap from "../components/modal/insert-markmap";
 import { cleanupTableEditButtons } from "../lib/discourse/table";
+import { postTextSelectionToolbar } from "../lib/fast-edit";
 
 async function initializeMarkmap(api) {
   const modalService = api.container.lookup("service:modal");
@@ -34,7 +35,7 @@ async function initializeMarkmap(api) {
   });
 
   api.decorateCookedElement((element, helper) => {
-    const isPreview = element.classList.contains("d-editor-preview");
+    const isPreview = markmapManager.isPreview(element);
 
     if (!helper && !isPreview) {
       return;
@@ -43,15 +44,14 @@ async function initializeMarkmap(api) {
     const key =
       helper && !isPreview ? `post_${helper.getModel().id}` : "composer";
 
-    /*if (key === "composer") {
-      discourseDebounce(applyMarkmaps, element, helper, key, 0);
-    } else {
-      applyMarkmaps(element, helper, key, siteSettings);
-    }*/
-
     const attrs = helper?.widget.attrs || {};
-    markmapManager.applyMarkmaps(element, key, attrs);
+    markmapManager.applyMarkmaps(element, key, isPreview, attrs);
   });
+
+  api.modifyClass(
+    "component:post-text-selection-toolbar",
+    postTextSelectionToolbar
+  );
 
   api.onPageChange(() => {
     markmapManager.clear();
@@ -65,6 +65,6 @@ export default {
   name: "discourse-markmap",
 
   initialize() {
-    withPluginApi("0.10.1", initializeMarkmap);
+    withPluginApi("1.32.0", initializeMarkmap);
   },
 };
