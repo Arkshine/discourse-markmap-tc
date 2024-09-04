@@ -19,7 +19,7 @@ en:
       form:
         title:
           label: "Title"
-          description: "The title of the Markmap."
+          description: "An optional title of the Markmap."
         auto_fit:
           label: "Auto Fit"
           description: "Automatically fit the Markmap to the window size."
