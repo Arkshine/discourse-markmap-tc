@@ -41,10 +41,9 @@ async function initializeMarkmap(api) {
       return;
     }
 
-    const key =
-      helper && !isPreview ? `post_${helper.getModel().id}` : "composer";
-
+    const key = markmapManager.uniqueKey(isPreview, helper?.getModel());
     const attrs = helper?.widget.attrs || {};
+
     markmapManager.applyMarkmaps(element, key, isPreview, attrs);
   });
 

@@ -20,6 +20,18 @@ export default class MarkmapManager extends Service {
   foldNodesState = new Map();
   lastPosition = new Map();
 
+  constructor() {
+    super(...arguments);
+
+    this.appEvents.on("composer:open", this, this.resetStateOnComposer);
+  }
+
+  willDestroy() {
+    this.appEvents.off("composer:open", this, this.resetStateOnComposer);
+
+    super.willDestroy(...arguments);
+  }
+
   applyMarkmaps(element, key = "composer", isPreview, attrs = {}) {
     const markmaps = element.querySelectorAll('[data-wrap="markmap"]');
 
@@ -647,6 +659,25 @@ export default class MarkmapManager extends Service {
     return element
       ? element.classList.contains("d-editor-preview")
       : document.querySelector(".d-editor-preview") !== null;
+  }
+
+  resetStateOnComposer(data) {
+    const postId = data.model?.post?.id;
+    if (!postId) {
+      return;
+    }
+
+    [this.lastPosition, this.foldNodesState].forEach((map) => {
+      map.keys().forEach((key) => {
+        if (key.startsWith("composer") || key.startsWith(`post_${postId}`)) {
+          map.delete(key);
+        }
+      });
+    });
+  }
+
+  uniqueKey(isPreview, post = null) {
+    return post && !isPreview ? `post_${post.id}` : "composer";
   }
 
   clear() {
