@@ -84,12 +84,14 @@ export default class MarkmapManager extends Service {
     const options = this.markmapInstance.deriveOptions(wrapElement.dataset);
     const handler = `${key}.${index}`;
 
+    options.height = options.height || 400;
+
     // Wrapper to contain SVG and toolbar.
     const [svgWrapper, svg] = this.createWrapper({
       handler,
       index,
       width: "100%",
-      height: `${options.height}px` || "500px",
+      height: `${options.height}px`,
       isPreview,
     });
 
@@ -254,9 +256,10 @@ export default class MarkmapManager extends Service {
       svg.classList.add("markmap");
       svg.dataset.index = index;
       svg.dataset.handler = handler;
-      svg.style.width = width;
-      svg.style.height = height;
     }
+
+    svg.style.width = width;
+    svg.style.height = height;
 
     svgWrapper.append(svg);
 
@@ -595,10 +598,6 @@ export default class MarkmapManager extends Service {
       mermaidElements.forEach((element, index) => {
         promises.push(
           new Promise((mermaidResolve) => {
-            console.log(
-              "element.dataset.processed2",
-              element.dataset.processed
-            );
             if (element.dataset.processed) {
               applyWidthStyle(element);
               mermaidResolve();
@@ -606,7 +605,6 @@ export default class MarkmapManager extends Service {
               const observer = (observers[index] = new MutationObserver(
                 (mutations) =>
                   mutations.forEach((mutation) => {
-                    console.log("mutation", mutation);
                     observers[index]?.disconnect();
                     applyWidthStyle(mutation.target);
                     mermaidResolve();
