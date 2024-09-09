@@ -5,6 +5,7 @@ import { postTextSelectionToolbar } from "../lib/fast-edit";
 
 async function initializeMarkmap(api) {
   const modalService = api.container.lookup("service:modal");
+  const routerService = api.container.lookup("service:router");
   const markmapManager = api.container.lookup("service:markmap-manager");
   const markmapInstance = api.container.lookup("service:markmap-instance");
 
@@ -52,12 +53,16 @@ async function initializeMarkmap(api) {
     postTextSelectionToolbar
   );
 
-  api.onPageChange(() => {
+  api.cleanupStream(cleanupTableEditButtons);
+
+  routerService.on("routeDidChange", (transition) => {
+    if (transition.isAborted) {
+      return;
+    }
+
     markmapManager.clear();
     markmapInstance.clear();
   });
-
-  api.cleanupStream(cleanupTableEditButtons);
 }
 
 export default {
