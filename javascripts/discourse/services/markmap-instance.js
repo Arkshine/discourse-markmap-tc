@@ -1,6 +1,5 @@
 import { later, next } from "@ember/runloop";
 import Service, { service } from "@ember/service";
-import discourseDebounce from "discourse-common/lib/debounce";
 import { Transformer } from "../lib/markmap/transform";
 import { Markmap } from "../lib/markmap/view";
 import { defaultOptions } from "../lib/markmap/view/constants";

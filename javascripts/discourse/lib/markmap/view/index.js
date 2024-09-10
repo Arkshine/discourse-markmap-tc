@@ -28,6 +28,9 @@ const containerCSS = `
       margin: 0;
       padding: 0;
     }
+    .markmap-container > .markmap-foreign > div .md-table td {
+      padding: 3px 3px 3px .5em;
+    }
     .markmap-container > .markmap-foreign > div:last-child {
       /* override base CSS */
     }
@@ -225,6 +228,8 @@ export class Markmap {
         }),
       ])
     );
+
+    console.log("vContainer", vContainer.firstChild);
 
     const vStyle = mountDom(
       createElement(Fragment, {}, [
@@ -604,8 +609,9 @@ export class Markmap {
         (update) => update,
         (exit) => exit.remove()
       )
-      .attr("width", (d) =>
-        Math.max(0, d.ySize - spacingHorizontal - paddingX * 2)
+      .attr(
+        "width",
+        (d) => Math.max(0, d.ySize - spacingHorizontal - paddingX * 2 + 10) // Added extra 10 for table
       )
       .attr("height", (d) => d.xSize);
 

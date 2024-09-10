@@ -42,9 +42,6 @@
 
         .md-table {
           margin: 0;
-          overflow: hidden;
-
-          font-size: 0.99em;
 
           tbody tr:last-child {
             border-bottom: none;
@@ -54,16 +51,6 @@
             border-radius: initial;
             box-shadow: none;
           }
-        }
-
-        table {
-          line-height: normal;
-        }
-
-        table,
-        th,
-        td {
-          border: none;
         }
 
         code {
@@ -236,14 +223,6 @@
 
     mark {
       background: var(--markmap-highlight-bg);
-    }*/
-
-    /*
-    table,
-    th,
-    td {
-      border-collapse: collapse;
-      border: var(--markmap-table-border);
     }*/
 
     img {

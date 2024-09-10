@@ -342,33 +342,10 @@ export default class MarkmapManager extends Service {
   }
 
   /**
-   * Handles the table positioning and click event to edit in a modal.
+   * Handles the table click event to edit in a modal.
    */
-  handleTable({ wrapElement, svg, attrs }) {
+  handleTable({ svg, attrs }) {
     svg.querySelectorAll(".md-table").forEach((table) => {
-      const foreignElement = table.closest(".markmap-foreign");
-
-      const maxWith = parseInt(wrapElement.dataset.maxWidth, 10);
-      const isTableOverflowOnX = maxWith > 0 && table.clientWidth >= maxWith;
-
-      // As long as the table is not overflowing horizontally (usually happens with a maxWidth)
-      // we force nowrap to make sure everything is visible.
-      if (!isTableOverflowOnX) {
-        table.style.whiteSpace = "nowrap";
-      }
-
-      // If the table is overflowing vertically between the foreign element and the table
-      // We move up the table with the difference between the two heights.
-      const tableRectHeight = table.getBoundingClientRect().height;
-      const foreignElementRectHeight =
-        foreignElement.getBoundingClientRect().height;
-
-      if (tableRectHeight > foreignElementRectHeight) {
-        table.style.marginTop = `-${
-          Math.ceil(tableRectHeight - foreignElementRectHeight) + 1
-        }px`;
-      }
-
       // Restores the edit button event.
       const buttonElement = table.querySelector(
         ".fullscreen-table-wrapper__buttons > button"
