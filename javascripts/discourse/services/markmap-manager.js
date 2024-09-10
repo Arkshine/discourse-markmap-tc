@@ -345,7 +345,7 @@ export default class MarkmapManager extends Service {
    * Handles the table positioning and click event to edit in a modal.
    */
   handleTable({ wrapElement, svg, attrs }) {
-    svg.querySelectorAll(".md-table").forEach((table, index) => {
+    svg.querySelectorAll(".md-table").forEach((table) => {
       const foreignElement = table.closest(".markmap-foreign");
 
       const maxWith = parseInt(wrapElement.dataset.maxWidth, 10);
@@ -378,7 +378,7 @@ export default class MarkmapManager extends Service {
         buttonElement.addEventListener(
           "click",
           generateSpreadsheetModal.bind({
-            tableIndex: index,
+            tableIndex: table.getAttribute("data-table-index"),
             modalService: this.modal,
             ...attrs,
           }),
