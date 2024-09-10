@@ -391,7 +391,7 @@ export default class MarkmapManager extends Service {
   /**
    * Handles the MathJax rendering in the SVG foreign element.
    */
-  async handleMath({ wrapElement /*svg*/ }) {
+  async handleMath({ wrapElement }) {
     return new Promise((resolve) => {
       if (
         !this.siteSettings.discourse_math_enabled ||
@@ -401,120 +401,70 @@ export default class MarkmapManager extends Service {
         return;
       }
 
-      if (this.siteSettings.discourse_math_provider === "mathjax") {
-        const mathElements = wrapElement.querySelectorAll(
-          '.math:not([data-markmap-pass="true"]'
-        );
-        mathElements.forEach((mathElement) => {
-          mathElement.nextSibling.dataset.markmap = true;
+      let observers = [];
+      let promises = [];
 
-          const scriptElement = mathElement.nextSibling.lastChild;
+      if (this.siteSettings.discourse_math_provider === "mathjax") {
+        wrapElement.querySelectorAll(".math").forEach((mathElement, index) => {
+          const scriptElement = mathElement.nextSibling?.lastChild;
 
           // .innertText used in the plugin doesn't work on hidden element.
-          if (!scriptElement.textContent) {
+          if (scriptElement && !scriptElement.textContent) {
             scriptElement.textContent = mathElement.textContent;
           }
-        });
 
-        // The math plugin doesn't render the math expression
-        // if the element is hidden.
-        later(this, () => {
-          //const promise = new Promise((typesetsResolve) => {
-          /*window.MathJax.Hub.Queue(() => {
-            let allJax = window.MathJax.Hub.getAllJax(wrapElement).map(
-              (jax) => jax.inputID
-            );
+          promises.push(
+            new Promise((mathResolve) => {
+              observers[index] = new MutationObserver((mutations) => {
+                const mutation = mutations[0];
+                const target = mutation.target;
 
-            if (allJax.length === 0) {
-              resolve();
-              return;
-            }
-
-            if (this.lastMathResolve[wrapElement.dataset.handler]) {
-              //this.lastMathResolve[wrapElement.dataset.handler].resolve();
-            }
-
-            this.lastMathResolve[wrapElement.dataset.handler] = {
-              allJax,
-              resolve,
-              rendered: 0,
-            };
-
-            function waitForRender(message) {
-              const element = message[1];
-
-              if (!element.parentElement.dataset.markmap) {
-                return;
-              }
-
-              const { inputID } = window.MathJax.Hub.getJaxFor(element);
-              const handler = element.parentElement.closest(
-                `[data-wrap="markmap"]`
-              )?.dataset.handler;
-
-              if (
-                handler &&
-                this.lastMathResolve[handler].allJax.includes(inputID)
-              ) {
-                ++this.lastMathResolve[handler].rendered;
-
-                if (
-                  this.lastMathResolve[handler].rendered >=
-                  this.lastMathResolve[handler].allJax.length
-                ) {
-                  resolve();
+                if (!target.getAttribute("style")?.includes("display: none")) {
+                  return;
                 }
-              }
-            }
 
-            if (this.#mathJaxHook === null) {
-              this.#mathJaxHook = window.MathJax.Hub.Register.MessageHook(
-                "End Process",
-                waitForRender.bind(this)
-              );
-            }
-          });*/
-          /*const instance = this.markmapInstance.lookup(
-              wrapElement.dataset.handler
-            );
+                observers[index].disconnect();
+                mathResolve();
+              });
 
-            const gElement = document
-              .querySelector("svg.markmap .math")
-              .closest("g");
-
-            instance.ensureView(gElement.dataset.path);*/
-          //resolve();
+              observers[index].observe(mathElement, {
+                childList: true,
+                subtree: true,
+                attributeFilter: ["style"],
+              });
+            })
+          );
         });
       } else if (this.siteSettings.discourse_math_provider === "katex") {
-        // Wait for the math expression to be rendered
-        // so we can refresh the SVG.
-        const mathElements = Array.from(wrapElement.querySelectorAll(".math"));
-        const lastElement = mathElements.findLast(
-          (element) => !element.classList.contains("math-container")
-        );
+        wrapElement
+          .querySelectorAll(".math:not(.math-container)")
+          .forEach((mathElement, index) => {
+            promises.push(
+              new Promise((mathResolve) => {
+                observers[index] = new MutationObserver((mutations) => {
+                  mutations.forEach((mutation) => {
+                    if (
+                      mutation.type === "childList" &&
+                      mutation.addedNodes.length > 0 &&
+                      mutation.addedNodes[0].classList.contains("katex")
+                    ) {
+                      observers[index].disconnect();
+                      next(mathResolve);
+                    }
+                  });
+                });
 
-        if (!lastElement) {
-          resolve();
-        } else {
-          const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-              if (
-                mutation.type === "childList" &&
-                mutation.addedNodes.length > 0 &&
-                mutation.addedNodes[0].classList.contains("katex")
-              ) {
-                resolve();
-              }
-            });
+                observers[index].observe(mathElement, {
+                  childList: true,
+                  subtree: true,
+                  attributeFilter: ["class"],
+                });
+              })
+            );
           });
-
-          observer.observe(lastElement, {
-            childList: true,
-            subtree: true,
-            attributeFilter: ["class"],
-          });
-        }
       }
+
+      Promise.all(promises).finally(() => next(resolve));
     });
   }
 
@@ -593,8 +543,6 @@ export default class MarkmapManager extends Service {
         element.style.width = `${width}px`;
       };
 
-      // Wait for all the mermaid charts to be rendered.
-      // Redraws the SVG to define the mermaid width before refreshing the SVG.
       mermaidElements.forEach((element, index) => {
         promises.push(
           new Promise((mermaidResolve) => {
@@ -602,16 +550,15 @@ export default class MarkmapManager extends Service {
               applyWidthStyle(element);
               mermaidResolve();
             } else {
-              const observer = (observers[index] = new MutationObserver(
-                (mutations) =>
-                  mutations.forEach((mutation) => {
-                    observers[index]?.disconnect();
-                    applyWidthStyle(mutation.target);
-                    mermaidResolve();
-                  })
-              ));
+              observers[index] = new MutationObserver((mutations) =>
+                mutations.forEach((mutation) => {
+                  observers[index]?.disconnect();
+                  applyWidthStyle(mutation.target);
+                  mermaidResolve();
+                })
+              );
 
-              observer.observe(element, {
+              observers[index].observe(element, {
                 attributes: true,
                 attributeFilter: ["data-processed"],
               });
