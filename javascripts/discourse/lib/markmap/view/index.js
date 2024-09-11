@@ -7,7 +7,6 @@ import {
   walkTree,
 } from "../common";
 import Hook from "../common/hook";
-import { createElement, Fragment, mountDom } from "./../jsx-dom";
 import { defaultOptions, isMacintosh } from "./constants";
 
 const containerCSS = `
@@ -221,24 +220,19 @@ export class Markmap {
     const { color, nodeMinHeight, maxWidth, initialExpandLevel } = this.options;
     const { id } = this.state;
 
-    const vContainer = mountDom(
-      createElement(Fragment, {}, [
-        createElement("div", {
-          className: `markmap-container markmap ${id}-g`,
-        }),
-      ])
+    const vContainer = document.createDocumentFragment();
+    const containerDiv = document.createElement("div");
+    containerDiv.className = `markmap-container markmap ${id}-g`;
+    vContainer.appendChild(containerDiv);
+
+    const vStyle = document.createDocumentFragment();
+    const styleElement = document.createElement("style");
+    styleElement.textContent = [this.getStyleContent(), containerCSS].join(
+      "\n"
     );
+    vStyle.appendChild(styleElement);
 
-    console.log("vContainer", vContainer.firstChild);
-
-    const vStyle = mountDom(
-      createElement(Fragment, {}, [
-        createElement("style", {}, [
-          [this.getStyleContent(), containerCSS].join("\n"),
-        ]),
-      ])
-    );
-
+    // Get the first child of each fragment (the actual elements)
     const container = vContainer.firstChild;
     const style = vStyle.firstChild;
 
@@ -252,19 +246,14 @@ export class Markmap {
       item.children = item.children?.map((child) => ({ ...child }));
       nodeId += 1;
 
-      const group = mountDom(
-        createElement(
-          "div",
-          {
-            className: "markmap-foreign markmap-foreign-testing-max",
-            style: groupStyle,
-          },
-          createElement("div", {
-            dangerouslySetInnerHTML: { __html: item.content },
-          })
-        )
-      );
+      const group = document.createElement("div");
+      group.className = "markmap-foreign markmap-foreign-testing-max"; // Set the class name
+      group.style = groupStyle;
 
+      const innerDiv = document.createElement("div");
+      innerDiv.innerHTML = item.content;
+
+      group.appendChild(innerDiv);
       container.append(group);
 
       item.state = {
