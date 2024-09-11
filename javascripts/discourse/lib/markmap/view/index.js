@@ -600,7 +600,7 @@ export class Markmap {
       )
       .attr(
         "width",
-        (d) => Math.max(0, d.ySize - spacingHorizontal - paddingX * 2 + 10) // Added extra 10 for table
+        (d) => Math.max(0, d.ySize - spacingHorizontal - paddingX * 2 + 2) // Added extra 2 for table
       )
       .attr("height", (d) => d.xSize);
 
