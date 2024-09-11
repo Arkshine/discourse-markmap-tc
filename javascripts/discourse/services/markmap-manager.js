@@ -101,7 +101,7 @@ export default class MarkmapManager extends Service {
     wrapElement.dataset.handler = handler;
     wrapElement.dataset.processed = true;
 
-    this.createMarkmap({
+    return this.createMarkmap({
       wrapElement,
       svgWrapper,
       svg,
@@ -119,12 +119,12 @@ export default class MarkmapManager extends Service {
       handler,
       index,
       width: "100%",
-      height: "calc(100vh - 70px - 3rem)",
+      height: "100vh",
     });
 
     containerElement.append(svgWrapper);
 
-    this.createMarkmap({
+    return this.createMarkmap({
       wrapElement,
       svgWrapper,
       svg,
@@ -196,6 +196,8 @@ export default class MarkmapManager extends Service {
       options,
       attrs,
     });
+
+    return instance;
   }
 
   handleFeatures({ wrapElement, svg, handler, isPreview, attrs }) {

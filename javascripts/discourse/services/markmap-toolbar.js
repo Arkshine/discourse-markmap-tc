@@ -1,13 +1,8 @@
 import { tracked } from "@glimmer/tracking";
-import { later, next } from "@ember/runloop";
 import Service, { service } from "@ember/service";
-import discourseDebounce from "discourse-common/lib/debounce";
 import I18n from "discourse-i18n";
 import FullscreenMarkmap from "../components/modal/fullscreen-markmap";
 import { clsActive, clsToolbarItem, Toolbar } from "../lib/markmap/toolbar";
-import { Transformer } from "../lib/markmap/transform";
-import { Markmap } from "../lib/markmap/view";
-import { defaultOptions } from "../lib/markmap/view/constants";
 
 export default class MarkmapToolbar extends Service {
   @service modal;
@@ -68,35 +63,16 @@ export default class MarkmapToolbar extends Service {
 
     toolbar.register({
       id: "fullscreen",
-      title: I18n.t(themePrefix("toolbar.fullscreen")),
-      icon: "fullscreen-markmap",
+      title: I18n.t(
+        themePrefix(
+          modalElement ? "toolbar.fullscreen_exit" : "toolbar.fullscreen"
+        )
+      ),
+      icon: modalElement ? "fullscreen-exit-markmap" : "fullscreen-markmap",
       onClick: () => {
         if (modalElement) {
-          if (!document.fullscreenElement) {
-            modalElement.querySelector(".d-modal__header").style.display =
-              "none";
-
-            modalElement.addEventListener("fullscreenchange", (event) => {
-              if (!document.fullscreenElement) {
-                event.target.querySelector(".d-modal__header").style.display =
-                  "flex";
-              }
-            });
-
-            modalElement.requestFullscreen();
-
-            modalElement.addEventListener("fullscreenerror", (/*event*/) => {
-              // eslint-disable-next-line no-console
-              console.error("an error occurred changing into fullscreen");
-            });
-
-            this.markmapInstance.lookup(wrapper.dataset.handler)?.fit();
-          } else {
-            if (document.exitFullscreen) {
-              document.exitFullscreen();
-              modalElement.querySelector(".d-modal__header").style.display =
-                "block";
-            }
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
           }
         } else {
           this.modal.show(FullscreenMarkmap, {

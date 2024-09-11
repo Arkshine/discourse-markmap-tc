@@ -24,11 +24,31 @@ export default class FullscreenMarkmap extends Component {
     const modalBodyElement = element.querySelector(".d-modal__body");
     const { wrapElement, attrs } = this.args.model;
 
-    this.markmapManager.renderInModal({
+    const instance = this.markmapManager.renderInModal({
       containerElement: modalBodyElement,
       wrapElement,
       attrs,
     });
+
+    if (!document.fullscreenElement) {
+      element.querySelector(".d-modal__header").style.display = "none";
+
+      element.addEventListener("fullscreenchange", (event) => {
+        if (!document.fullscreenElement) {
+          event.target.querySelector(".d-modal__header").style.display = "flex";
+          this.closeModal();
+        } else {
+          instance.fit();
+        }
+      });
+
+      element.addEventListener("fullscreenerror", () => {
+        // eslint-disable-next-line no-console
+        console.error("an error occurred changing into fullscreen");
+      });
+
+      element.requestFullscreen();
+    }
   }
 
   <template>

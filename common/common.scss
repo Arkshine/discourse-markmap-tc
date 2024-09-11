@@ -3,6 +3,10 @@
     .d-modal.fullscreen-markmap-modal.-max & {
       max-width: 100vw;
       min-height: 100vh;
+
+      .d-modal__body {
+        padding: 0;
+      }
     }
   }
 }
@@ -150,7 +154,8 @@
     margin-top: 0;
 
     .mm-toolbar {
-      top: 0;
+      top: 2em;
+      right: 2em;
     }
   }
 }

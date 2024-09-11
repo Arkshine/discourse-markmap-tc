@@ -25,4 +25,7 @@
     <symbol id="fullscreen-markmap" viewBox="0 0 20 20" fill="none">
         <path fill="currentColor" d="M4 9V5h4v2H6v2zm0 2v4h4v-2H6v-2zm12-2V5h-4v2h2v2zm0 2v4h-4v-2h2v-2z" />
     </symbol>
+    <symbol id="fullscreen-exit-markmap" viewBox="0 0 24 24" fill="none">
+        <path fill="currentColor" d="M11 12a1 1 0 0 1 .993.883L12 13v5a1 1 0 0 1-1.993.117L10 18v-2.586l-5.293 5.293a1 1 0 0 1-1.497-1.32l.083-.094L8.586 14H6a1 1 0 0 1-.117-1.993L6 12zm8.293-8.707a1 1 0 0 1 1.497 1.32l-.083.094L15.414 10H18a1 1 0 0 1 .117 1.993L18 12h-5a1 1 0 0 1-.993-.883L12 11V6a1 1 0 0 1 1.993-.117L14 6v2.586z"/>
+    </symbol>
 </svg>
