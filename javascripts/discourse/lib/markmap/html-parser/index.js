@@ -65,7 +65,7 @@ export const defaultOptions = {
   selectorRules: defaultSelectorRules,
 };
 
-const MARKMAP_COMMENT_REGEX =
+export const MARKMAP_COMMENT_REGEX =
   /(?<comment>\/\/--\s*markmap:\s*(?<option>[^-\s]+)\s*--\/\/)/i;
 const SELECTOR_HEADING = /^h[1-6]$/;
 const SELECTOR_LIST = /^[uo]l$/;

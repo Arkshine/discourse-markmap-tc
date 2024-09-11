@@ -2,6 +2,7 @@ import { tracked } from "@glimmer/tracking";
 import Service, { service } from "@ember/service";
 import I18n from "discourse-i18n";
 import FullscreenMarkmap from "../components/modal/fullscreen-markmap";
+import { MARKMAP_COMMENT_REGEX } from "../lib/markmap/html-parser";
 import { clsActive, clsToolbarItem, Toolbar } from "../lib/markmap/toolbar";
 
 export default class MarkmapToolbar extends Service {
@@ -10,11 +11,7 @@ export default class MarkmapToolbar extends Service {
 
   @tracked contentDisplayed = false;
 
-  get isContentDisplayed() {
-    return this.contentDisplayed;
-  }
-
-  insertToolbar(handler, wrapper, attrs = {}) {
+  insertToolbar(handler, svgWrapper, attrs = {}) {
     const instance = this.markmapInstance.lookup(handler);
     if (!instance) {
       return;
@@ -77,7 +74,7 @@ export default class MarkmapToolbar extends Service {
         } else {
           this.modal.show(FullscreenMarkmap, {
             model: {
-              wrapElement: wrapper.previousElementSibling,
+              wrapElement: svgWrapper.previousElementSibling,
               attrs,
             },
           });
@@ -100,7 +97,15 @@ export default class MarkmapToolbar extends Service {
 
         this.contentDisplayed = true;
 
-        wrapper.style.display = "none";
+        svgWrapper.style.display = "none";
+
+        const regexSource = MARKMAP_COMMENT_REGEX.source;
+        const regexFlags = MARKMAP_COMMENT_REGEX.flags;
+
+        wrapElement.innerHTML = wrapElement.innerHTML.replace(
+          new RegExp(regexSource, regexFlags + "g"),
+          ""
+        );
 
         wrapElement.style.position = "relative";
         wrapElement.style.visibility = "visible";
@@ -117,7 +122,7 @@ export default class MarkmapToolbar extends Service {
           onClick: () => {
             this.contentDisplayed = false;
 
-            wrapper.style.display = "block";
+            svgWrapper.style.display = "block";
 
             wrapElement.style.position = "absolute";
             wrapElement.style.visibility = "hidden";
@@ -131,7 +136,7 @@ export default class MarkmapToolbar extends Service {
       },
     });
 
-    wrapper.insertBefore(el, wrapper.firstChild);
+    svgWrapper.insertBefore(el, svgWrapper.firstChild);
 
     const items = ["zoomIn", "zoomOut", "fit", "recurse", "fullscreen"];
 
