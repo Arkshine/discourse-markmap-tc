@@ -41,7 +41,9 @@ export default class MarkmapInstance extends Service {
   deriveOptions(options) {
     const allowedFields = {
       title: "string",
-      color: "string",
+
+      color: "color", // order is important
+      colorFreezeLevel: "number", // order is important
 
       autoFit: "boolean",
       embedGlobalCSS: "boolean",
@@ -69,16 +71,39 @@ export default class MarkmapInstance extends Service {
     for (const key in options) {
       if (allowedFields.hasOwnProperty(key)) {
         const type = allowedFields[key];
-        const value = options[key];
+        let value = options[key];
 
         if (value === undefined || typeof value === "function") {
           continue;
         }
 
         if (type === "boolean") {
-          newOptions[key] = value === "true" || value === true;
+          if (typeof value === "boolean") {
+            newOptions[key] = value;
+          } else if (typeof value === "string") {
+            newOptions[key] = value.toLowerCase() === "true";
+          } else {
+            newOptions[key] = !!parseInt(value, 10);
+          }
         } else if (type === "number") {
           newOptions[key] = parseInt(value, 10);
+
+          if (key === "colorFreezeLevel") {
+            const _color = newOptions.color || defaultOptions.color;
+            newOptions.color = (node) => {
+              node = {
+                ...node,
+                state: {
+                  ...node.state,
+                  path: node.state.path
+                    .split(".")
+                    .slice(0, newOptions[key])
+                    .join("."),
+                },
+              };
+              return _color(node);
+            };
+          }
         } else if (type === "float") {
           newOptions[key] = parseFloat(value);
         } else if (type === "string") {
@@ -86,6 +111,22 @@ export default class MarkmapInstance extends Service {
             newOptions[key] = value.split(",").map((item) => item.trim());
           } else {
             newOptions[key] = value;
+          }
+        } else if (type === "color") {
+          if (typeof value === "string") {
+            if (value.includes(",")) {
+              value = value.split(",").map((item) => item.trim());
+            } else {
+              value = [value];
+            }
+          }
+
+          if (value?.length) {
+            const colorFn =
+              value.length === 1
+                ? () => value[0]
+                : window.d3.scaleOrdinal(value);
+            newOptions[key] = (node) => colorFn(`${node.state.path}`);
           }
         }
       }
