@@ -1,0 +1,161 @@
+.d-modal {
+  &__container {
+    .d-modal.fullscreen-markmap-modal.-max & {
+      max-width: 100vw;
+      min-height: 100vh;
+
+      .d-modal__body {
+        padding: 0;
+      }
+    }
+  }
+}
+
+.cooked,
+.d-editor-preview,
+.fullscreen-markmap-modal {
+  .markmap-wrapper {
+    position: relative;
+    margin-bottom: 2rem;
+
+    .markmap {
+      margin-bottom: -7px;
+    }
+  }
+
+  .d-wrap[data-wrap="markmap"] {
+    position: fixed;
+    left: -9999px;
+    visibility: hidden;
+
+    & :is(h1, h2, h3, h4, h5, h6):first-of-type {
+      margin-top: 0;
+    }
+  }
+
+  .insert-markmap-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  svg {
+    .markmap {
+      &-foreign {
+        overflow-x: auto;
+
+        .md-table {
+          margin: 0;
+
+          tbody tr:last-child {
+            border-bottom: none;
+          }
+
+          &:hover {
+            border-radius: initial;
+            box-shadow: none;
+          }
+        }
+
+        code {
+          padding-top: 0;
+          padding-bottom: 0;
+
+          color: var(--primary-very-high);
+          background: var(--hljs-bg);
+        }
+
+        pre {
+          margin: 0;
+
+          > code {
+            display: block;
+            padding: 0.35em 0.5em;
+          }
+        }
+
+        [data-code-wrap="mermaid"]:not([data-processed]) {
+          > code {
+            display: none;
+          }
+
+          > code + .spinner {
+            position: absolute;
+            top: 50%;
+            left: 100px;
+            transform: translateY(-50%), translateX(100px);
+          }
+        }
+
+        blockquote {
+          padding: 6px 12px 3px 12px;
+          margin-top: 10px;
+        }
+
+        .image-wrapper {
+          padding-bottom: 0;
+        }
+
+        .lightbox-wrapper {
+          img:not(.thumbnail):not(.ytp-thumbnail-image):not(.emoji):not(
+              .avatar
+            ):not(.cooked):not(.lazyloaded) {
+            object-fit: contain;
+            object-position: bottom;
+
+            height: revert-layer;
+          }
+        }
+
+        .mjx-chtml {
+          font-size: 113% !important;
+        }
+
+        .katex {
+          font-size: 1em;
+        }
+
+        [data-code-wrap="mermaid"] .markdown-node-label p {
+          margin-block-start: 1em;
+          margin-block-end: 1em;
+          margin-inline-start: 0px;
+          margin-inline-end: 0px;
+        }
+      }
+    }
+  }
+}
+
+.cooked,
+.d-editor-preview,
+.fullscreen-markmap-modal {
+  .d-wrap[data-wrap="markmap"] {
+    padding: 1rem;
+  }
+
+  .markmap-wrapper,
+  .d-wrap[data-wrap="markmap"] {
+    border: 1px solid var(--primary-200);
+    margin-top: 1.95rem;
+
+    .mm-toolbar {
+      position: absolute;
+      top: -0.95rem;
+      right: 0.65rem;
+    }
+  }
+}
+
+.fullscreen-markmap-modal {
+  .markmap-wrapper,
+  .d-wrap[data-wrap="markmap"] {
+    padding: 0;
+    border: none;
+    margin-top: 0;
+
+    .mm-toolbar {
+      top: 2em;
+      right: 2em;
+    }
+  }
+}

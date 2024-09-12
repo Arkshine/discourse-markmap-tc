@@ -1,0 +1,61 @@
+.markmap {
+  --markmap-max-width: none;
+  --markmap-a-color: var(--tertiary);
+  --markmap-a-hover-color: var(--tertiary-medium);
+  --markmap-code-bg: var(--primary-100);
+  --markmap-code-color: var(--primary-900);
+  --markmap-highlight-bg: var(--highlight-bg);
+  --markmap-table-border: 1px solid currentColor;
+  --markmap-font: 300 16px/20px sans-serif;
+  --markmap-circle-open-bg: var(--secondary);
+  --markmap-text-color: var(--primary);
+
+  font: var(--markmap-font);
+  color: var(--markmap-text-color);
+
+  height: 100%;
+
+  &-link {
+    fill: none;
+  }
+
+  &-node {
+    > circle {
+      cursor: pointer;
+    }
+  }
+
+  &-foreign {
+    display: inline-block;
+
+    p {
+      margin: 0;
+    }
+
+    a {
+      color: var(--markmap-a-color);
+      &:hover {
+        color: var(--markmap-a-hover-color);
+      }
+    }
+
+    font-weight: normal;
+
+    img {
+      display: inline-block;
+    }
+
+    svg {
+      fill: currentColor;
+    }
+  }
+
+  &-foreign-testing-max {
+    max-width: var(--markmap-max-width);
+
+    img {
+      max-width: var(--markmap-max-width);
+      max-height: none;
+    }
+  }
+}
