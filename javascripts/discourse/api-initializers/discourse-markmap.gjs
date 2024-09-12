@@ -15,8 +15,8 @@ class MarkmapInit {
     setOwner(this, owner);
 
     withPluginApi("1.32.0", (api) => {
-      // this is a hack as applySurround expects a top level
-      // composer key, not possible from a theme
+      // This is a hack as applySurround expects a top level
+      // composer key, not possible from a theme.
       window.I18n.translations[
         window.I18n.locale
       ].js.composer.markmap_sample = ` `;
@@ -66,6 +66,9 @@ class MarkmapInit {
 
       api.cleanupStream(cleanupTableEditButtons);
 
+      // onPageChanged is called the next runloop
+      // when decorateCookedElement has already started,
+      // so we need an event before that.
       this.router.on("routeDidChange", (transition) => {
         if (transition.isAborted) {
           return;

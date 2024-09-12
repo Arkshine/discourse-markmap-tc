@@ -22,13 +22,11 @@ export default class MarkmapManager extends Service {
 
   constructor() {
     super(...arguments);
-
     this.appEvents.on("composer:open", this, this.resetStateOnComposer);
   }
 
   willDestroy() {
     this.appEvents.off("composer:open", this, this.resetStateOnComposer);
-
     super.willDestroy(...arguments);
   }
 
@@ -554,19 +552,18 @@ export default class MarkmapManager extends Service {
     this.lastPosition.set(handler, transform);
   }
 
-  restoreFoldNodes(handler, { context, originData }) {
-    if (originData || !this.foldNodesState.get(handler)) {
+  restoreFoldNodes(handler, { context, options }) {
+    if (options.action === "click" || !this.foldNodesState.has(handler)) {
       return;
     }
 
+    const nodesSate = this.foldNodesState.get(handler);
+
     walkTree(context.state.data, (item, _next) => {
-      if (
-        this.foldNodesState.has(handler) &&
-        this.foldNodesState.get(handler)[item.state.path]
-      ) {
+      if (nodesSate.hasOwnProperty(item.state.path)) {
         item.payload = {
           ...item.payload,
-          fold: 1,
+          fold: nodesSate[item.state.path] ? 1 : 0,
         };
       }
 

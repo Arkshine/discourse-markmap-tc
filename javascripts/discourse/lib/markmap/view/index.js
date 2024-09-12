@@ -109,7 +109,7 @@ export class Markmap {
       recursive = !recursive;
     }
 
-    this.toggleNode(d.data, recursive);
+    this.toggleNode(d.data, recursive, { action: "click" });
   };
 
   constructor(svg, opts) {
@@ -188,7 +188,7 @@ export class Markmap {
     this.styleNode.text(style);
   }
 
-  toggleNode(data, recursive = false) {
+  toggleNode(data, recursive = false, options = {}) {
     const fold = data.payload?.fold ? 0 : 1;
     if (recursive) {
       // recursively
@@ -206,12 +206,13 @@ export class Markmap {
       };
     }
 
-    this.renderData(data);
+    this.renderData(data, options);
 
     this.hooks.toggleNode.call({
       context: this,
       expand: !fold,
       data,
+      options,
     });
   }
 
@@ -392,7 +393,7 @@ export class Markmap {
     this.renderData();
   }
 
-  renderData(originData) {
+  renderData(originData, options = {}) {
     if (!this.state.data) {
       return;
     }
@@ -400,6 +401,7 @@ export class Markmap {
     this.hooks.beforeRender.call({
       context: this,
       originData,
+      options,
     });
 
     const { spacingHorizontal, paddingX, spacingVertical, autoFit, color } =
