@@ -206,14 +206,15 @@ export class Markmap {
       };
     }
 
-    this.renderData(data, options);
-
     this.hooks.toggleNode.call({
       context: this,
       expand: !fold,
+      recursive,
       data,
       options,
     });
+
+    this.renderData(data, options);
   }
 
   initializeData(node) {
