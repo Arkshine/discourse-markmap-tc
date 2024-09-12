@@ -169,8 +169,12 @@ export default class MarkmapManager extends Service {
     // We want to start after the SVG render animation ends.
     later(
       this,
-      () =>
-        instance.hooks.onZoom.tap(this.trackSvgPosition.bind(this, handler)),
+      () => {
+        if (this.isDestroyed || this.isDestroying) {
+          return;
+        }
+        instance.hooks.onZoom.tap(this.trackSvgPosition.bind(this, handler));
+      },
       options.duration
     );
 
@@ -198,7 +202,7 @@ export default class MarkmapManager extends Service {
     return instance;
   }
 
-  handleFeatures({ wrapElement, svg, handler, isPreview, attrs }) {
+  handleFeatures({ wrapElement, svg, handler, isPreview, options, attrs }) {
     // Delay a little to process after others components / plugins.
     schedule("afterRender", async () => {
       if (!isPreview) {
@@ -231,9 +235,18 @@ export default class MarkmapManager extends Service {
         .lookup(handler)
         ?.hooks.toggleNode.tap(({ expand }) => {
           if (expand) {
-            this.handleLightbox({ wrapElement });
-            this.handleCheckbox({ wrapElement, svg });
-            this.handleTable({ wrapElement, svg, attrs });
+            later(
+              this,
+              () => {
+                if (this.isDestroyed || this.isDestroying) {
+                  return;
+                }
+                this.handleLightbox({ wrapElement });
+                this.handleCheckbox({ wrapElement, svg });
+                this.handleTable({ wrapElement, svg, attrs });
+              },
+              options.duration
+            );
           }
         });
     }
