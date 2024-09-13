@@ -154,11 +154,11 @@ export default class MarkmapManager extends Service {
     }
 
     // Removes the transition effect after the first render
-    // to avoid flickering effect when the SVG is refreshed.
+    // to avoid a flickering effect when the SVG is refreshed.
     if (!this.markmapInstance.isFirstRender(handler)) {
       instance.setOptions({ duration: 0 });
       instance.hooks.afterRender.tap(() =>
-        next(() => instance.setOptions({ duration: options.duration }))
+        instance.setOptions({ duration: options.duration })
       );
     }
 
