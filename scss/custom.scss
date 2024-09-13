@@ -150,8 +150,9 @@
   .markmap-wrapper,
   .d-wrap[data-wrap="markmap"] {
     padding: 0;
+    margin: 0;
+
     border: none;
-    margin-top: 0;
 
     .mm-toolbar {
       top: 2em;

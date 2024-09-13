@@ -112,13 +112,12 @@ export default class MarkmapManager extends Service {
 
   renderInModal({ index = -1, containerElement, wrapElement, attrs = {} }) {
     const handler = "modal";
-    const options = this.markmapInstance.deriveOptions(wrapElement.dataset);
 
     const [svgWrapper, svg] = this.createWrapper({
       handler,
       index,
       width: "100%",
-      height: `calc(100vh * ${options.fitRatio})`,
+      height: "100vh",
     });
 
     containerElement.append(svgWrapper);
