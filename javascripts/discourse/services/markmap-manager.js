@@ -152,15 +152,6 @@ export default class MarkmapManager extends Service {
       instance = this.markmapInstance.create(handler, svg);
     }
 
-    // Removes the transition effect after the first render
-    // to avoid a flickering effect when the SVG is refreshed.
-    if (!this.markmapInstance.isFirstRender(handler)) {
-      instance.setOptions({ duration: 0 });
-      instance.hooks.afterRender.tap(() =>
-        instance.setOptions({ duration: options.duration })
-      );
-    }
-
     // Events to track and restore fold nodes.
     instance.hooks.toggleNode.tap(this.trackFoldNodes.bind(this, handler));
     instance.hooks.beforeRender.tap(this.restoreFoldNodes.bind(this, handler));
@@ -178,11 +169,19 @@ export default class MarkmapManager extends Service {
       options.duration
     );
 
+    // Removes the transition effect after the first render
+    // to avoid a flickering effect when the SVG is refreshed.
+    if (!this.markmapInstance.isFirstRender(handler)) {
+      instance.setOptions({ duration: 0 });
+    }
+
     // Sets the data.
     instance.setData(this.markmapInstance.transformHtml(wrapElement));
 
     // Always fit the SVG the first time and restores the zoom level/position if needed.
-    instance.fit(this.lastPosition.get(handler));
+    instance.fit(this.lastPosition.get(handler)).then(() => {
+      instance.setOptions({ duration: options.duration });
+    });
 
     if (isPreview) {
       this.previousSVGInComposer.set(handler, svg);

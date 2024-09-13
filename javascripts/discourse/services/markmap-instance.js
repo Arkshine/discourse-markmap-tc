@@ -153,10 +153,11 @@ export default class MarkmapInstance extends Service {
       duration: 0 /* Avoid transition effect if we force a refresh */,
     });
 
-    instance.fit(lastPosition);
-    instance.setOptions({
-      duration,
-    });
+    instance.fit(lastPosition).then(() =>
+      instance.setOptions({
+        duration,
+      })
+    );
   }
 
   // TODO: Fix me ?
