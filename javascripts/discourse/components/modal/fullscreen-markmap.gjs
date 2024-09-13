@@ -30,7 +30,7 @@ export default class FullscreenMarkmap extends Component {
       attrs,
     });
 
-    if (document.fullscreenEnabled) {
+    if (!document.fullscreenEnabled) {
       const headerHeight =
         element.querySelector(".d-modal__header").offsetHeight;
       element.querySelector(
