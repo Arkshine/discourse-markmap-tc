@@ -579,14 +579,29 @@ export default class MarkmapManager extends Service {
           fold: nodesSate[item.state.path] ? 1 : 0,
         };
       }
-
       _next();
     });
   }
 
-  trackFoldNodes(handler, { expand, data }) {
-    this.foldNodesState.set(handler, this.foldNodesState.get(handler) || {});
-    this.foldNodesState.get(handler)[data.state.path] = !expand;
+  trackFoldNodes(handler, { expand, recursive, data }) {
+    if (!this.foldNodesState.has(handler)) {
+      this.foldNodesState.set(handler, {});
+    }
+
+    const nodeState = this.foldNodesState.get(handler);
+
+    if (recursive) {
+      walkTree(data, (item, _next) => {
+        if (item.payload?.hasComment) {
+          nodeState[item.state.path] = !expand;
+        }
+        _next();
+      });
+
+      return;
+    }
+
+    nodeState[data.state.path] = !expand;
   }
 
   isPreview(element = null) {

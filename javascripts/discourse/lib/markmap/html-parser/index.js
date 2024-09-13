@@ -274,9 +274,9 @@ export function convertNode(htmlRoot) {
 
     if (htmlNode.comments) {
       if (htmlNode.comments.includes("foldAll")) {
-        node.payload = { ...node.payload, fold: 2 };
+        node.payload = { ...node.payload, hasComment: true, fold: 2 };
       } else if (htmlNode.comments.includes("fold")) {
-        node.payload = { ...node.payload, fold: 1 };
+        node.payload = { ...node.payload, hasComment: true, fold: 1 };
       }
     }
 
