@@ -6,6 +6,8 @@ import {
   SELECTORS,
 } from "discourse/lib/lightbox/constants";
 import loadScript from "discourse/lib/load-script";
+import { iconHTML } from "discourse-common/lib/icon-library";
+import OptionsMarkmap from "../components/modal/options-markmap";
 import { generateSpreadsheetModal } from "../lib/discourse/table";
 import { walkTree } from "../lib/markmap/common";
 
@@ -185,6 +187,7 @@ export default class MarkmapManager extends Service {
 
     if (isPreview) {
       this.previousSVGInComposer.set(handler, svg);
+      this.insertOptionButtonOnPreview({ handler, svgWrapper });
     }
 
     this.markmapToolbar.insertToolbar(handler, svgWrapper, attrs);
@@ -609,19 +612,54 @@ export default class MarkmapManager extends Service {
       : document.querySelector(".d-editor-preview") !== null;
   }
 
-  resetStateOnComposer(data) {
-    const postId = data.model?.post?.id;
-    if (!postId) {
-      return;
-    }
+  openOptionsModal(event) {
+    const currentTartget = event.currentTarget;
+    const handler = currentTartget.dataset.handler;
 
-    [this.lastPosition, this.foldNodesState].forEach((map) => {
-      map.keys().forEach((key) => {
-        if (key.startsWith("composer") || key.startsWith(`post_${postId}`)) {
-          map.delete(key);
-        }
-      });
+    this.modal.show(OptionsMarkmap, {
+      model: {
+        handler,
+      },
     });
+  }
+
+  insertOptionButtonOnPreview({ handler, svgWrapper }) {
+    const optionsWrapper = document.createElement("button");
+    optionsWrapper.classList.add(
+      "btn",
+      "btn-icon",
+      "no-text",
+      "markmap-options"
+    );
+    optionsWrapper.dataset.handler = handler;
+    optionsWrapper.innerHTML = iconHTML("cog");
+    optionsWrapper.addEventListener("click", this.openOptionsModal.bind(this), {
+      passive: true,
+    });
+    svgWrapper.append(optionsWrapper);
+  }
+
+  resetStateOnComposer(data) {
+    document.querySelectorAll(".markmap-options").forEach((optionsWrapper) => {
+      optionsWrapper.removeEventListener(
+        "click",
+        this.openOptionsModal.bind(this),
+        {
+          passive: true,
+        }
+      );
+    });
+
+    const postId = data.model?.post?.id;
+    if (postId) {
+      [this.lastPosition, this.foldNodesState].forEach((map) => {
+        map.keys().forEach((key) => {
+          if (key.startsWith("composer") || key.startsWith(`post_${postId}`)) {
+            map.delete(key);
+          }
+        });
+      });
+    }
   }
 
   uniqueKey(isPreview, post = null) {

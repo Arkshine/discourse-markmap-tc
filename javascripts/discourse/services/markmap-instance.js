@@ -1,4 +1,4 @@
-import { later, next } from "@ember/runloop";
+import { later } from "@ember/runloop";
 import Service, { service } from "@ember/service";
 import { Transformer } from "../lib/markmap/transform";
 import { Markmap } from "../lib/markmap/view";
@@ -38,7 +38,7 @@ export default class MarkmapInstance extends Service {
     return this.renderCounts.get(handler) === 1;
   }
 
-  deriveOptions(options) {
+  deriveOptions(options, flags = { useDefault: true }) {
     const allowedFields = {
       title: "string",
 
@@ -64,7 +64,9 @@ export default class MarkmapInstance extends Service {
       fitRatio: "float",
     };
 
-    options = { ...defaultOptions, ...options };
+    if (flags.useDefault) {
+      options = { ...defaultOptions, ...options };
+    }
 
     let newOptions = {};
 

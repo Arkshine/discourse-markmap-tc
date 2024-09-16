@@ -13,10 +13,15 @@ en:
     show_markmap: "Show Markmap"
   modal:
     actions:
+      update: "Update"
       insert: "Insert"
       cancel: "Cancel"
+    edit:
+      title: "Edit Markmap"
+      error: "Failed to retrieve the options."
     insert:
       title: "Insert Markmap"
+    options:
       form:
         title:
           label: "Title"

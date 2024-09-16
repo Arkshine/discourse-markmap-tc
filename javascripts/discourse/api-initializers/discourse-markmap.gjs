@@ -1,7 +1,7 @@
 import { setOwner } from "@ember/owner";
 import { service } from "@ember/service";
 import { withPluginApi } from "discourse/lib/plugin-api";
-import InsertMarkmap from "../components/modal/insert-markmap";
+import OptionsMarkmap from "../components/modal/options-markmap";
 import { cleanupTableEditButtons } from "../lib/discourse/table";
 import { postTextSelectionToolbar } from "../lib/fast-edit";
 
@@ -25,7 +25,7 @@ class MarkmapInit {
         icon: "diagram-markmap",
         label: themePrefix("insert_markmap"),
         action: (toolbarEvent) =>
-          this.modal.show(InsertMarkmap, {
+          this.modal.show(OptionsMarkmap, {
             model: { insertMarkmap: toolbarEvent.applySurround },
           }),
       });
@@ -37,7 +37,7 @@ class MarkmapInit {
           group: "insertions",
           icon: "diagram-markmap",
           perform: (toolbarEvent) =>
-            this.modal.show(InsertMarkmap, {
+            this.modal.show(OptionsMarkmap, {
               model: { insertMarkmap: toolbarEvent.applySurround },
             }),
         });
