@@ -30,6 +30,17 @@ const containerCSS = `
     .markmap-container > .markmap-foreign > div .md-table td {
       padding: 3px 3px 3px .5em;
     }
+    .markmap-container > .markmap-foreign > div .image-wrapper {
+      display: grid;
+    }
+    .markmap-container > .markmap-foreign > div .button-wrapper {
+      padding: .25em .5em;
+      min-width: 19em;
+      height: var(--resizer-height, 2.25em);
+    }
+    .markmap-container > .markmap-foreign > div > img {
+      padding-bottom: 5px;
+    }
     .markmap-container > .markmap-foreign > div:last-child {
       /* override base CSS */
     }
@@ -326,8 +337,8 @@ export class Markmap {
       next();
     });
 
-    container.remove();
-    style.remove();
+    ///container.remove();
+    //style.remove();
   }
 
   _checkImages(container) {
