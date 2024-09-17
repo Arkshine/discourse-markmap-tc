@@ -25,9 +25,19 @@ en:
       form:
         title:
           label: "Title"
-          description: "An optional title of the Markmap."
+          description: |
+            An optional title of the Markmap.<br>
+            <span class="smalldesc">Note: using an h1 heading (e.g. `#`) overwrites this value.</span>
+        max_height:
+          label: "Max Height"
+          description: |
+            The maximum height of the Markmap.<br>
+            <span class="smalldesc">Height will auto fit if the natural Markmap's height is less than this Max Height.<br>
+            The default value is 400 (px).</span>
         auto_fit:
           label: "Auto Fit"
-          description: "Automatically fit the Markmap to the window size."
+          description: |
+            Automatically fit the Markmap to the window size. <br>
+            <span class="smalldesc">E.g.: after (un)folding a node.</span>
     fullscreen:
       title: "View Markmap"

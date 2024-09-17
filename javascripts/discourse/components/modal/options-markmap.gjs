@@ -3,6 +3,7 @@ import { tracked } from "@glimmer/tracking";
 import { on } from "@ember/modifier";
 import { action } from "@ember/object";
 import { service } from "@ember/service";
+import { htmlSafe } from "@ember/template";
 import DButton from "discourse/components/d-button";
 import DModal from "discourse/components/d-modal";
 import DToggleSwitch from "discourse/components/d-toggle-switch";
@@ -20,6 +21,7 @@ export default class OptionsMarkmap extends Component {
 
   @tracked fieldTitle = "";
   @tracked fieldAutoFit = defaultOptions.autoFit;
+  @tracked fieldMaxHeight;
 
   markmapMatch;
   markmapOptions;
@@ -69,6 +71,7 @@ export default class OptionsMarkmap extends Component {
 
       this.fieldTitle = this.markmapOptions.title;
       this.fieldAutoFit = this.markmapOptions.autoFit;
+      this.fieldMaxHeight = this.markmapOptions.maxHeight;
     }
   }
 
@@ -159,6 +162,10 @@ export default class OptionsMarkmap extends Component {
 
     options.push(`autoFit=${this.fieldAutoFit ? "true" : "false"}`);
 
+    if (this.fieldMaxHeight) {
+      options.push(`maxHeight=${this.fieldMaxHeight}`);
+    }
+
     if (this.edition) {
       const textArea = document.querySelector(
         ".d-editor-textarea-wrapper textarea"
@@ -221,8 +228,8 @@ export default class OptionsMarkmap extends Component {
               <label>
                 {{i18n (themePrefix "modal.options.form.title.label")}}
               </label>
-              <div class="options-markmap__description">{{i18n
-                  (themePrefix "modal.options.form.title.description")
+              <div class="options-markmap__description">{{htmlSafe
+                  (i18n (themePrefix "modal.options.form.title.description"))
                 }}</div>
               <TextField
                 @value={{this.fieldTitle}}
@@ -232,10 +239,25 @@ export default class OptionsMarkmap extends Component {
             </div>
             <div class="options-markmap__input">
               <label>
+                {{i18n (themePrefix "modal.options.form.max_height.label")}}
+              </label>
+              <div class="options-markmap__description">{{htmlSafe
+                  (i18n
+                    (themePrefix "modal.options.form.max_height.description")
+                  )
+                }}</div>
+              <TextField
+                @value={{this.fieldMaxHeight}}
+                @autofocus="autofocus"
+                @autocomplete="off"
+              />
+            </div>
+            <div class="options-markmap__input">
+              <label>
                 {{i18n (themePrefix "modal.options.form.auto_fit.label")}}
               </label>
-              <div class="options-markmap__description">{{i18n
-                  (themePrefix "modal.options.form.auto_fit.description")
+              <div class="options-markmap__description">{{htmlSafe
+                  (i18n (themePrefix "modal.options.form.auto_fit.description"))
                 }}</div>
               <DToggleSwitch
                 @state={{this.fieldAutoFit}}

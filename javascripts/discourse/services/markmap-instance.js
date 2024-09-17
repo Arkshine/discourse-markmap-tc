@@ -1,4 +1,3 @@
-import { later } from "@ember/runloop";
 import Service, { service } from "@ember/service";
 import { Transformer } from "../lib/markmap/transform";
 import { Markmap } from "../lib/markmap/view";
@@ -41,27 +40,25 @@ export default class MarkmapInstance extends Service {
   deriveOptions(options, flags = { useDefault: true }) {
     const allowedFields = {
       title: "string",
-
       color: "color", // order is important
       colorFreezeLevel: "number", // order is important
-
       autoFit: "boolean",
-      embedGlobalCSS: "boolean",
+      //embedGlobalCSS: "boolean",
       scrollForPan: "boolean",
       pan: "boolean",
       toggleRecursively: "boolean",
       zoom: "boolean",
-
       duration: "number",
       initialExpandLevel: "number",
-      height: "number",
       maxWidth: "number",
       paddingX: "number",
       nodeMinHeight: "number",
       spacingHorizontal: "number",
       spacingVertical: "number",
-
       fitRatio: "float",
+
+      // Custom
+      maxHeight: "number",
     };
 
     if (flags.useDefault) {
@@ -109,11 +106,7 @@ export default class MarkmapInstance extends Service {
         } else if (type === "float") {
           newOptions[key] = parseFloat(value);
         } else if (type === "string") {
-          if (value.includes(",")) {
-            newOptions[key] = value.split(",").map((item) => item.trim());
-          } else {
-            newOptions[key] = value;
-          }
+          newOptions[key] = value;
         } else if (type === "color") {
           if (typeof value === "string") {
             if (value.includes(",")) {
@@ -145,50 +138,38 @@ export default class MarkmapInstance extends Service {
     return root;
   }
 
-  async refreshTransform(element, lastPosition = null) {
-    const instance = this.lookup(element.dataset.handler);
-    const options = this.deriveOptions(element.dataset);
+  async refreshTransform(wrapElement, lastPosition = null) {
+    const instance = this.lookup(wrapElement.dataset.handler);
+    const options = this.deriveOptions(wrapElement.dataset);
     const { duration } = options;
 
-    instance.setData(this.transformHtml(element), {
+    instance.setData(this.transformHtml(wrapElement), {
       ...options,
       duration: 0 /* Avoid transition effect if we force a refresh */,
     });
 
-    instance.fit(lastPosition).then(() =>
+    instance.fit(lastPosition).then(async () => {
+      await this.autoFitHeight(instance, wrapElement, options);
+
       instance.setOptions({
         duration,
-      })
-    );
+      });
+    });
   }
 
-  // TODO: Fix me ?
-  autoFitHeight(handler, svg) {
+  async autoFitHeight(instance, wrapElement, options) {
+    const svg = wrapElement.nextElementSibling.querySelector("svg.markmap");
+
+    svg.style.height = `${options.maxHeight}px`;
+    await instance.fit();
+
     const svgHeight = svg.getBoundingClientRect().height;
-    const gHeight = svg.querySelector("g")?.getBoundingClientRect().height;
+    const gHeight =
+      svg.querySelector("g").getBoundingClientRect().height / options.fitRatio;
 
-    if (!gHeight) {
-      return;
+    if (gHeight < options.maxHeight && gHeight < svgHeight) {
+      svg.style.height = `${gHeight}px`;
+      await instance.fit();
     }
-
-    const instance = this.instance(handler).get();
-
-    if (!instance) {
-      return;
-    }
-
-    svg.style.height = `${this.getOptions(handler).height}px`;
-    instance.fit();
-
-    later(
-      this,
-      () => {
-        if (gHeight < this.getOptions(handler).height && gHeight < svgHeight) {
-          svg.style.height = `${gHeight}px`;
-          instance.fit();
-        }
-      },
-      1000
-    );
   }
 }
