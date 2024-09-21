@@ -8,6 +8,7 @@ import {
 import loadScript from "discourse/lib/load-script";
 import { iconHTML } from "discourse-common/lib/icon-library";
 import OptionsMarkmap from "../components/modal/options-markmap";
+import { md5 } from "../lib/discourse/md5";
 import { generateSpreadsheetModal } from "../lib/discourse/table";
 import { walkTree } from "../lib/markmap/common";
 
@@ -21,6 +22,7 @@ export default class MarkmapManager extends Service {
   previousSVGInComposer = new Map();
   foldNodesState = new Map();
   lastPosition = new Map();
+  processing = new Map();
 
   constructor() {
     super(...arguments);
@@ -36,9 +38,11 @@ export default class MarkmapManager extends Service {
     const markmaps = element.querySelectorAll('[data-wrap="markmap"]');
 
     if (!markmaps.length) {
-      element
-        .querySelectorAll(".markmap-wrapper")
-        .forEach((wrapper) => wrapper.remove());
+      if (isPreview) {
+        element
+          .querySelectorAll(".markmap-wrapper")
+          .forEach((wrapper) => wrapper.remove());
+      }
       return;
     }
 
@@ -154,6 +158,8 @@ export default class MarkmapManager extends Service {
       instance = this.markmapInstance.create(handler, svg);
     }
 
+    this.markmapInstance.trackRenderCount(handler);
+
     // Events to track and restore fold nodes.
     instance.hooks.toggleNode.tap(this.trackFoldNodes.bind(this, handler));
     instance.hooks.beforeRender.tap(this.restoreFoldNodes.bind(this, handler));
@@ -213,24 +219,70 @@ export default class MarkmapManager extends Service {
         this.handleTable({ wrapElement, svg, attrs });
       }
 
-      Promise.all([
-        this.handleMath({ wrapElement, svg }),
-        this.handleMermaid({ wrapElement, svg }),
-      ]).finally(() => {
-        this.markmapInstance.refreshTransform(
-          wrapElement,
-          this.lastPosition.get(handler)
-        );
+      await this.markmapInstance.refreshTransform(
+        wrapElement,
+        this.lastPosition.get(handler),
+        isPreview
+      );
 
-        this.handleMermaid({ wrapElement, svg, updateStyle: true });
-      });
+      // These features can take time to be rendered,
+      // so no need to spam the process.
+      if (!this.processing[handler]) {
+        this.processing[handler] = true;
+
+        const previousHtmlMd5 = md5(wrapElement.innerHTML);
+
+        Promise.all([
+          this.handleMath({ wrapElement, svg }),
+          this.handleMermaid({ wrapElement, svg }),
+        ]).then(async () => {
+          const currentHtmlMd5 = md5(wrapElement.innerHTML);
+          console.log("previousHtmlMd5", previousHtmlMd5);
+          console.log("currentHtmlMd5", currentHtmlMd5);
+
+          // Don't refresh if the content did not change
+          if (previousHtmlMd5 !== currentHtmlMd5) {
+            await this.markmapInstance.refreshTransform(
+              wrapElement,
+              this.lastPosition.get(handler),
+              isPreview
+            );
+
+            later(
+              this,
+              () => {
+                console.log("RERRRRRRGF");
+                this.markmapInstance.refreshTransform(
+                  wrapElement,
+                  this.lastPosition.get(handler),
+                  isPreview
+                );
+              },
+              2000
+            );
+          } else {
+            console.log("NOT SAME");
+          }
+
+          this.handleMermaid({ wrapElement, svg, updateStyle: true });
+
+          this.processing[handler] = false;
+        });
+      }
     });
 
     if (isPreview) {
-      // Forces the editor scroll position to match the markmap height.
-      document
-        .querySelector(".d-editor-input")
-        .dispatchEvent(new CustomEvent("scroll"));
+      if (this.markmapInstance.isFirstRender(handler)) {
+        // Forces the editor scroll position to match the markmap height.
+        later(this, () => {
+          if (this.isDestroyed || this.isDestroying) {
+            return;
+          }
+          document
+            .querySelector(".d-editor-input")
+            .dispatchEvent(new CustomEvent("scroll"));
+        });
+      }
     } else {
       // If we unfold a node, we need to reattach events.
       this.markmapInstance
@@ -534,6 +586,8 @@ export default class MarkmapManager extends Service {
         const { width } = element.firstChild.getBoundingClientRect();
         element.style.width = `${width}px`;
       };
+
+      console.log("mermaidElements", mermaidElements);
 
       mermaidElements.forEach((element, index) => {
         promises.push(

@@ -5,10 +5,12 @@ import { defaultOptions } from "../lib/markmap/view/constants";
 
 export default class MarkmapInstance extends Service {
   @service modal;
+  @service markmapManager;
 
   transformer = new Transformer();
   instances = new Map();
   renderCounts = new Map();
+  dynamicOpts = new Map();
 
   lookup(handler) {
     return this.instances.get(handler);
@@ -16,24 +18,27 @@ export default class MarkmapInstance extends Service {
 
   create(handler, svg, options) {
     const instance = Markmap.create(svg, options);
-
     this.instances.set(handler, instance);
-
-    if (!this.renderCounts.has(handler)) {
-      this.renderCounts.set(handler, 0);
-    }
-
-    this.renderCounts.set(handler, this.renderCounts.get(handler) + 1);
 
     return instance;
   }
 
+  trackRenderCount(handler) {
+    if (!this.renderCounts.has(handler)) {
+      this.renderCounts.set(handler, 1);
+    } else {
+      this.renderCounts.set(handler, this.renderCounts.get(handler) + 1);
+    }
+  }
+
   clear() {
+    console.log("clear");
     this.instances.clear();
     this.renderCounts.clear();
   }
 
   isFirstRender(handler) {
+    //console.log("isFirstRender", handler, this.renderCounts.get(handler));
     return this.renderCounts.get(handler) === 1;
   }
 
@@ -138,7 +143,7 @@ export default class MarkmapInstance extends Service {
     return root;
   }
 
-  async refreshTransform(wrapElement, lastPosition = null) {
+  async refreshTransform(wrapElement, lastPosition = null, isPreview) {
     const instance = this.lookup(wrapElement.dataset.handler);
     const options = this.deriveOptions(wrapElement.dataset);
     const { duration } = options;
@@ -148,8 +153,11 @@ export default class MarkmapInstance extends Service {
       duration: 0 /* Avoid transition effect if we force a refresh */,
     });
 
-    instance.fit(lastPosition).then(async () => {
-      await this.autoFitHeight(instance, wrapElement, options);
+    return instance.fit(lastPosition).then(async () => {
+      //console.log("wrapElement.dataset.autoFitHeight", instance.autoFitHeight);
+      if (!instance.autoFitHeight) {
+        //await this.autoFitHeight(instance, wrapElement, options);
+      }
 
       instance.setOptions({
         duration,
@@ -169,6 +177,18 @@ export default class MarkmapInstance extends Service {
 
     if (gHeight < options.maxHeight && gHeight < svgHeight) {
       svg.style.height = `${gHeight}px`;
+      wrapElement.dataset.autoFitHeight = gHeight;
+
+      const handler = wrapElement.dataset.handler;
+      const dynamicOpts = this.dynamicOpts.get(handler) || {};
+      this.dynamicOpts.set(handler, {
+        ...dynamicOpts,
+        autoFitHeight: true,
+      });
+
+      instance.autoFitHeight = true;
+      // console.log("instance", instance);
+
       await instance.fit();
     }
   }

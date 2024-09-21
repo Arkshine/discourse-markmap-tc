@@ -28,7 +28,7 @@ const containerCSS = `
       padding: 0;
     }
     .markmap-container > .markmap-foreign > div .md-table td {
-      padding: 3px 3px 3px .5em;
+      padding: 3px 3px 3px 2em;
     }
     .markmap-container > .markmap-foreign > div .image-wrapper {
       display: grid;
