@@ -20,6 +20,7 @@ export default class MarkmapManager extends Service {
   @service markmapToolbar;
 
   previousSVGInComposer = new Map();
+  previousWrapElementInComposerMd5 = new Map();
   foldNodesState = new Map();
   lastPosition = new Map();
   processing = new Map();
@@ -89,7 +90,7 @@ export default class MarkmapManager extends Service {
     const handler = `${key}.${index}`;
 
     // Wrapper to contain SVG and toolbar.
-    const [svgWrapper, svg] = this.createWrapper({
+    const [svgWrapper, svg, svgWasLoaded] = this.createWrapper({
       handler,
       index,
       width: "100%",
@@ -107,6 +108,7 @@ export default class MarkmapManager extends Service {
       wrapElement,
       svgWrapper,
       svg,
+      svgWasLoaded,
       attrs,
       handler,
       isPreview,
@@ -141,6 +143,7 @@ export default class MarkmapManager extends Service {
     wrapElement,
     svgWrapper,
     svg,
+    svgWasLoaded,
     attrs,
     handler,
     isPreview,
@@ -179,10 +182,22 @@ export default class MarkmapManager extends Service {
     // to avoid a flickering effect when the SVG is refreshed.
     if (!this.markmapInstance.isFirstRender(handler)) {
       instance.setOptions({ duration: 0 });
+
+    if (isPreview) {
+      // Forces a refresh if the content inside [wrap] has changed.
+      if (
+        svgWasLoaded &&
+        md5(wrapElement.innerHTML) !==
+          this.previousWrapElementInComposerMd5.get(handler)
+      ) {
+        svgWasLoaded = false;
+      }
     }
 
     // Sets the data.
-    instance.setData(this.markmapInstance.transformHtml(wrapElement));
+    if (!svgWasLoaded) {
+      instance.setData(this.markmapInstance.transformHtml(wrapElement));
+    }
 
     // Always fit the SVG the first time and restores the zoom level/position if needed.
     instance.fit(this.lastPosition.get(handler)).then(() => {
@@ -191,117 +206,101 @@ export default class MarkmapManager extends Service {
 
     if (isPreview) {
       this.previousSVGInComposer.set(handler, svg);
+      this.previousWrapElementInComposerMd5.set(
+        handler,
+        md5(wrapElement.innerHTML)
+      );
+
       this.insertOptionButtonOnPreview({ handler, svgWrapper });
     }
 
     this.markmapToolbar.insertToolbar(handler, svgWrapper, attrs);
 
-    this.handleFeatures({
-      wrapElement,
+    if (!svgWasLoaded) {
+      this.handleFeatures({
+        wrapElement,
       svg,
       handler,
-      isPreview,
-      options,
-      attrs,
-    });
+        isPreview,
+        inFullScreen: document.querySelector(
+          ".d-modal.fullscreen-markmap-modal"
+        ),
+        options,
+        attrs,
+        instance,
+      });
+    }
 
     return instance;
   }
 
   handleFeatures({ wrapElement, svg, handler, isPreview, options, attrs }) {
+  handleFeatures({
+    wrapElement,
+    svg,
+    handler,
+    isPreview,
+    inFullScreen,
+    options,
+    attrs,
+  }) {
     // Delay a little to process after others components / plugins.
     schedule("afterRender", async () => {
-      if (!isPreview) {
+      if (!(isPreview || inFullScreen)) {
         this.handleLightbox({ wrapElement });
         this.handleCheckbox({ wrapElement, svg });
         this.handleTable({ wrapElement, svg, attrs });
       }
 
-      await this.markmapInstance.refreshTransform(
-        wrapElement,
-        this.lastPosition.get(handler),
-        isPreview
-      );
-
-      // These features can take time to be rendered,
-      // so no need to spam the process.
-      if (!this.processing[handler]) {
-        this.processing[handler] = true;
-
-        const previousHtmlMd5 = md5(wrapElement.innerHTML);
-
-        Promise.all([
-          this.handleMath({ wrapElement, svg }),
-          this.handleMermaid({ wrapElement, svg }),
-        ]).then(async () => {
-          const currentHtmlMd5 = md5(wrapElement.innerHTML);
-          console.log("previousHtmlMd5", previousHtmlMd5);
-          console.log("currentHtmlMd5", currentHtmlMd5);
-
-          // Don't refresh if the content did not change
-          if (previousHtmlMd5 !== currentHtmlMd5) {
-            await this.markmapInstance.refreshTransform(
+      const promises = [
+        this.refreshContent({
+          wrapElement,
+          handler,
+          isPreview,
+          runBefore: () => this.handleMermaid({ wrapElement, svg }),
+          runAfter: () =>
+            this.handleMermaid({
               wrapElement,
-              this.lastPosition.get(handler),
-              isPreview
-            );
+              svg,
+              updateStyle: true,
+            }),
+        }),
 
-            later(
-              this,
-              () => {
-                console.log("RERRRRRRGF");
-                this.markmapInstance.refreshTransform(
-                  wrapElement,
-                  this.lastPosition.get(handler),
-                  isPreview
-                );
-              },
-              2000
-            );
-          } else {
-            console.log("NOT SAME");
-          }
+        this.refreshContent({
+          wrapElement,
+          handler,
+          isPreview,
+          runBefore: () => this.handleMath({ wrapElement, svg }),
+        }),
+      ];
 
-          this.handleMermaid({ wrapElement, svg, updateStyle: true });
-
-          this.processing[handler] = false;
-        });
-      }
+      Promise.all(promises).then(async () => {
+        //await instance.fit(this.lastPosition.get(handler));
+      });
     });
 
-    if (isPreview) {
-      if (this.markmapInstance.isFirstRender(handler)) {
-        // Forces the editor scroll position to match the markmap height.
-        later(this, () => {
-          if (this.isDestroyed || this.isDestroying) {
-            return;
-          }
-          document
-            .querySelector(".d-editor-input")
-            .dispatchEvent(new CustomEvent("scroll"));
-        });
+    // If we unfold a node, we need to reattach events.
+    this.markmapInstance.lookup(handler)?.hooks.toggleNode.tap(({ expand }) => {
+      if (expand) {
+        later(
+          this,
+          () => {
+            if (this.isDestroyed || this.isDestroying) {
+              return;
+            }
+
+            if (!(isPreview || inFullScreen)) {
+              this.handleLightbox({ wrapElement });
+              this.handleCheckbox({ wrapElement, svg });
+              this.handleTable({ wrapElement, svg, attrs });
+            }
+
+            this.handleMermaid({ wrapElement, svg, updateStyle: true });
+          },
+          options.duration
+        );
       }
-    } else {
-      // If we unfold a node, we need to reattach events.
-      this.markmapInstance
-        .lookup(handler)
-        ?.hooks.toggleNode.tap(({ expand }) => {
-          if (expand) {
-            later(
-              this,
-              () => {
-                if (this.isDestroyed || this.isDestroying) {
-                  return;
-                }
-                this.handleLightbox({ wrapElement });
-                this.handleCheckbox({ wrapElement, svg });
-                this.handleTable({ wrapElement, svg, attrs });
-              },
-              options.duration
-            );
-          }
-        });
-    }
+    });
   }
 
   createWrapper({ handler, index, width, height, isPreview }) {
@@ -311,9 +310,11 @@ export default class MarkmapManager extends Service {
     svgWrapper.dataset.handler = handler;
 
     let svg;
+    let svgWasLoaded = false;
 
     if (isPreview) {
       svg = this.previousSVGInComposer.get(handler);
+      svgWasLoaded = !!svg;
     }
 
     if (!svg) {
@@ -328,7 +329,7 @@ export default class MarkmapManager extends Service {
 
     svgWrapper.append(svg);
 
-    return [svgWrapper, svg];
+    return [svgWrapper, svg, svgWasLoaded];
   }
 
   /**
@@ -702,6 +703,26 @@ export default class MarkmapManager extends Service {
     svgWrapper.append(optionsWrapper);
   }
 
+  async refreshContent({
+    wrapElement,
+    handler,
+    isPreview,
+    runBefore,
+    runAfter,
+  }) {
+    await runBefore();
+
+    await this.markmapInstance.refreshTransform(
+      wrapElement,
+      this.lastPosition.get(handler),
+      isPreview
+    );
+
+    if (runAfter) {
+      await runAfter();
+    }
+  }
+
   resetStateOnComposer(data) {
     document.querySelectorAll(".markmap-options").forEach((optionsWrapper) => {
       optionsWrapper.removeEventListener(
@@ -735,6 +756,7 @@ export default class MarkmapManager extends Service {
     }
 
     this.previousSVGInComposer.clear();
+    this.previousWrapElementInComposerMd5.clear();
     this.foldNodesState.clear();
     this.lastPosition.clear();
   }
