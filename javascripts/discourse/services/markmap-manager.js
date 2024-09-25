@@ -536,6 +536,7 @@ export default class MarkmapManager extends Service {
             const oldId = mermaidSvg.id;
             const newId = `${oldId}_markmap`;
             mermaidSvg.id = newId;
+
             mermaidStyle.textContent = mermaidStyle.textContent.replaceAll(
               oldId,
               newId
@@ -592,11 +593,10 @@ export default class MarkmapManager extends Service {
         if (!element.firstChild) {
           return;
         }
-        const { width } = element.firstChild.getBoundingClientRect();
+        const { width, height } = element.firstChild.getBoundingClientRect();
         element.style.width = `${width}px`;
+        element.style.height = `${height}px`;
       };
-
-      console.log("mermaidElements", mermaidElements);
 
       mermaidElements.forEach((element, index) => {
         promises.push(
