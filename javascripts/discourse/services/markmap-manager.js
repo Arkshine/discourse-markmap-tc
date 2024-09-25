@@ -119,14 +119,21 @@ export default class MarkmapManager extends Service {
   renderInModal({ index = -1, containerElement, wrapElement, attrs = {} }) {
     const handler = "modal";
 
-    const [svgWrapper, svg] = this.createWrapper({
-      handler,
-      index,
-      width: "100%",
-      height: "100vh",
-    });
+    let svgWrapper, svg;
+    svgWrapper = containerElement.querySelector(".markmap-wrapper");
 
-    containerElement.append(svgWrapper);
+    if (svgWrapper) {
+      svg = svgWrapper.querySelector("svg");
+    } else {
+      [svgWrapper, svg] = this.createWrapper({
+        handler,
+        index,
+        width: "100%",
+        height: "100vh",
+      });
+
+      containerElement.append(svgWrapper);
+    }
 
     return this.createMarkmap({
       wrapElement,
