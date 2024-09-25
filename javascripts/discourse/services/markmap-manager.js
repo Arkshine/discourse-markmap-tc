@@ -88,8 +88,6 @@ export default class MarkmapManager extends Service {
     const options = this.markmapInstance.deriveOptions(wrapElement.dataset);
     const handler = `${key}.${index}`;
 
-    options.maxHeight = options.maxHeight || 400;
-
     // Wrapper to contain SVG and toolbar.
     const [svgWrapper, svg] = this.createWrapper({
       handler,

@@ -18,4 +18,6 @@ export const defaultOptions = {
   zoom: true,
   pan: true,
   toggleRecursively: false,
+
+  maxHeight: 400,
 };
