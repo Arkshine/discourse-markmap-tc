@@ -12,6 +12,10 @@ export default class MarkmapToolbar extends Service {
   @tracked contentDisplayed = false;
 
   insertToolbar(handler, svgWrapper, attrs = {}) {
+    if (svgWrapper.querySelector(".mm-toolbar")) {
+      return;
+    }
+
     const instance = this.markmapInstance.lookup(handler);
     if (!instance) {
       return;
