@@ -28,7 +28,7 @@ const containerCSS = `
       padding: 0;
     }
     .markmap-container > .markmap-foreign > div .md-table td {
-      padding: 3px 3px 3px 2em;
+      padding: 3px 3px 3px 1em;
     }
     .markmap-container > .markmap-foreign > div .image-wrapper {
       display: grid;
@@ -337,8 +337,8 @@ export class Markmap {
       next();
     });
 
-    ///container.remove();
-    //style.remove();
+    container.remove();
+    style.remove();
   }
 
   _checkImages(container) {
@@ -612,9 +612,8 @@ export class Markmap {
         (update) => update,
         (exit) => exit.remove()
       )
-      .attr(
-        "width",
-        (d) => Math.max(0, d.ySize - spacingHorizontal - paddingX * 2 + 2) // Added extra 2 for table
+      .attr("width", (d) =>
+        Math.max(0, d.ySize - spacingHorizontal - paddingX * 2)
       )
       .attr("height", (d) => d.xSize);
 
