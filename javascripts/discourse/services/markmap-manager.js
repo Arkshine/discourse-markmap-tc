@@ -447,7 +447,11 @@ export default class MarkmapManager extends Service {
       let promises = [];
 
       if (this.siteSettings.discourse_math_provider === "mathjax") {
-        wrapElement.querySelectorAll(".math").forEach((mathElement, index) => {
+        const mathsElements = wrapElement.querySelectorAll(
+          '.math[data-applied-mathjax="true"]'
+        );
+
+        mathsElements.forEach((mathElement, index) => {
           const scriptElement = mathElement.nextSibling?.lastChild;
 
           // .innertText used in the plugin doesn't work on hidden element.
@@ -457,6 +461,13 @@ export default class MarkmapManager extends Service {
 
           promises.push(
             new Promise((mathResolve) => {
+              if (
+                mathElement.getAttribute("style")?.includes("display: none")
+              ) {
+                mathResolve();
+                return;
+              }
+
               observers[index] = new MutationObserver((mutations) => {
                 const mutation = mutations[0];
                 const target = mutation.target;
