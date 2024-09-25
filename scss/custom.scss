@@ -166,6 +166,11 @@
       right: 2em;
     }
   }
+
+  .fullscreen-table-wrapper__buttons,
+  .fullscreen-cmd {
+    display: none;
+  }
 }
 
 .d-editor-preview {
