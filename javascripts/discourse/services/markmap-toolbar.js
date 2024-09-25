@@ -68,7 +68,7 @@ export default class MarkmapToolbar extends Service {
       icon: modalElement ? "fullscreen-exit-markmap" : "fullscreen-markmap",
       onClick: () => {
         if (modalElement) {
-          if (document.exitFullscreen) {
+          if (document.exitFullscreen && document.fullscreenElement) {
             document.exitFullscreen();
           }
         } else {
