@@ -7,6 +7,7 @@ import {
 } from "discourse/lib/lightbox/constants";
 import loadScript from "discourse/lib/load-script";
 import { iconHTML } from "discourse-common/lib/icon-library";
+import { bind } from "discourse-common/utils/decorators";
 import OptionsMarkmap from "../components/modal/options-markmap";
 import { md5 } from "../lib/discourse/md5";
 import { generateSpreadsheetModal } from "../lib/discourse/table";
@@ -23,19 +24,24 @@ export default class MarkmapManager extends Service {
   previousWrapElementInComposerMd5 = new Map();
   foldNodesState = new Map();
   lastPosition = new Map();
-  processing = new Map();
+  canTrackPosition = new Map();
+  refreshingContent = new Map();
+
+  currentPostId;
 
   constructor() {
     super(...arguments);
-    this.appEvents.on("composer:open", this, this.resetStateOnComposer);
+    this.appEvents.on("composer:open", this, this.onComposerOpen);
+    this.appEvents.on("composer:will-close", this, this.onComposerClose);
   }
 
   willDestroy() {
-    this.appEvents.off("composer:open", this, this.resetStateOnComposer);
+    this.appEvents.off("composer:open", this, this.onComposerOpen);
+    this.appEvents.off("composer:will-close", this, this.onComposerClose);
     super.willDestroy(...arguments);
   }
 
-  applyMarkmaps(element, key = "composer", isPreview, attrs = {}) {
+  applyMarkmaps(element, isPreview, postId, attrs = {}) {
     const markmaps = element.querySelectorAll('[data-wrap="markmap"]');
 
     if (!markmaps.length) {
@@ -54,8 +60,8 @@ export default class MarkmapManager extends Service {
           wrapElement,
           index,
           isPreview,
+          postId,
           attrs,
-          key,
         });
       });
     });
@@ -75,7 +81,7 @@ export default class MarkmapManager extends Service {
     }
   }
 
-  render({ wrapElement, index, isPreview, attrs, key }) {
+  render({ wrapElement, index, isPreview, postId, attrs }) {
     if (!wrapElement || wrapElement.dataset.processed) {
       return;
     }
@@ -87,14 +93,20 @@ export default class MarkmapManager extends Service {
     }
 
     const options = this.markmapInstance.deriveOptions(wrapElement.dataset);
-    const handler = `${key}.${index}`;
+    const handler = this.uniqueKey({ isPreview, index, postId });
+
+    options.index = index;
+    options.postId = postId;
 
     // Wrapper to contain SVG and toolbar.
     const [svgWrapper, svg, svgWasLoaded] = this.createWrapper({
       handler,
       index,
       width: "100%",
-      height: `${options.maxHeight}px`,
+      height: `${
+        this.markmapInstance.dynamicOpts.get(handler)?.autoFitHeight ||
+        options.maxHeight
+      }px`,
       isPreview,
     });
 
@@ -167,49 +179,40 @@ export default class MarkmapManager extends Service {
     }
 
     this.markmapInstance.trackRenderCount(handler);
+    this.markmapToolbar.insertToolbar(handler, svgWrapper, attrs);
 
-    // Events to track and restore fold nodes.
+    // Events to track and restore fold nodes, and zoom/position.
     instance.hooks.toggleNode.tap(this.trackFoldNodes.bind(this, handler));
     instance.hooks.beforeRender.tap(this.restoreFoldNodes.bind(this, handler));
+    instance.hooks.onZoom.tap(this.trackSvgPosition.bind(this, handler));
 
-    // Event to track SVG zoom and position.
-    // We want to start after the SVG render animation ends.
-    later(
-      this,
-      () => {
-        if (this.isDestroyed || this.isDestroying) {
-          return;
-        }
-        instance.hooks.onZoom.tap(this.trackSvgPosition.bind(this, handler));
-      },
-      options.duration
-    );
-
-    // Removes the transition effect after the first render
-    // to avoid a flickering effect when the SVG is refreshed.
-    if (!this.markmapInstance.isFirstRender(handler)) {
-      instance.setOptions({ duration: 0 });
-
-    if (isPreview) {
-      // Forces a refresh if the content inside [wrap] has changed.
-      if (
-        svgWasLoaded &&
-        md5(wrapElement.innerHTML) !==
-          this.previousWrapElementInComposerMd5.get(handler)
-      ) {
-        svgWasLoaded = false;
-      }
+    // Forces a refresh if the content inside [wrap] has changed.
+    if (
+      isPreview &&
+      svgWasLoaded &&
+      md5(wrapElement.innerHTML) !==
+        this.previousWrapElementInComposerMd5.get(handler)
+    ) {
+      svgWasLoaded = false;
     }
+
+    const firstRender = this.markmapInstance.isFirstRender(handler);
+    const lastPosition = this.lastPosition.get(handler);
 
     // Sets the data.
     if (!svgWasLoaded) {
-      instance.setData(this.markmapInstance.transformHtml(wrapElement));
-    }
+      const transformedHtml = this.markmapInstance.transformHtml(wrapElement);
 
-    // Always fit the SVG the first time and restores the zoom level/position if needed.
-    instance.fit(this.lastPosition.get(handler)).then(() => {
-      instance.setOptions({ duration: options.duration });
-    });
+      if (firstRender) {
+        instance.setData(transformedHtml);
+        instance.fit();
+      } else {
+        instance.setData(transformedHtml, { duration: 0 });
+        instance
+          .fit(lastPosition)
+          .then(() => instance.setOptions({ duration: options.duration }));
+      }
+    }
 
     if (isPreview) {
       this.previousSVGInComposer.set(handler, svg);
@@ -218,30 +221,51 @@ export default class MarkmapManager extends Service {
         md5(wrapElement.innerHTML)
       );
 
-      this.insertOptionButtonOnPreview({ handler, svgWrapper });
+      this.insertOptionButtonOnPreview({
+        handler,
+        index: options.index,
+        svgWrapper,
+      });
     }
 
-    this.markmapToolbar.insertToolbar(handler, svgWrapper, attrs);
-
+    // Fixes a few Discourse features.
     if (!svgWasLoaded) {
       this.handleFeatures({
         wrapElement,
-      svg,
-      handler,
+        svg,
+        handler,
         isPreview,
-        inFullScreen: document.querySelector(
-          ".d-modal.fullscreen-markmap-modal"
-        ),
+        inFullScreen: this.inFullScreen,
         options,
         attrs,
         instance,
+      }).then(async () => {
+        if (!isPreview) {
+          this.markmapInstance
+            .refreshTransform(wrapElement, lastPosition)
+            .then(() => {
+              this.canTrackPosition.set(handler, true);
+            });
+        } else {
+          if (firstRender) {
+            this.markmapInstance.autoFitHeight(wrapElement, options);
+          } else {
+            this.canTrackPosition.set(handler, true);
+          }
+        }
       });
+    } else {
+      // Composer area
+      if (firstRender) {
+        this.markmapInstance.autoFitHeight(wrapElement, options);
+      } else {
+        instance.fit(this.lastPosition.get(handler));
+      }
     }
 
     return instance;
   }
 
-  handleFeatures({ wrapElement, svg, handler, isPreview, options, attrs }) {
   handleFeatures({
     wrapElement,
     svg,
@@ -251,41 +275,6 @@ export default class MarkmapManager extends Service {
     options,
     attrs,
   }) {
-    // Delay a little to process after others components / plugins.
-    schedule("afterRender", async () => {
-      if (!(isPreview || inFullScreen)) {
-        this.handleLightbox({ wrapElement });
-        this.handleCheckbox({ wrapElement, svg });
-        this.handleTable({ wrapElement, svg, attrs });
-      }
-
-      const promises = [
-        this.refreshContent({
-          wrapElement,
-          handler,
-          isPreview,
-          runBefore: () => this.handleMermaid({ wrapElement, svg }),
-          runAfter: () =>
-            this.handleMermaid({
-              wrapElement,
-              svg,
-              updateStyle: true,
-            }),
-        }),
-
-        this.refreshContent({
-          wrapElement,
-          handler,
-          isPreview,
-          runBefore: () => this.handleMath({ wrapElement, svg }),
-        }),
-      ];
-
-      Promise.all(promises).then(async () => {
-        //await instance.fit(this.lastPosition.get(handler));
-      });
-    });
-
     // If we unfold a node, we need to reattach events.
     this.markmapInstance.lookup(handler)?.hooks.toggleNode.tap(({ expand }) => {
       if (expand) {
@@ -307,6 +296,91 @@ export default class MarkmapManager extends Service {
           options.duration
         );
       }
+    });
+
+    return new Promise((resolve) => {
+      // Delay a little to process after others components / plugins.
+      schedule("afterRender", async () => {
+        if (!(isPreview || inFullScreen)) {
+          this.handleLightbox({ wrapElement });
+          this.handleCheckbox({ wrapElement, svg });
+          this.handleTable({ wrapElement, svg, attrs });
+        }
+
+        if (isPreview) {
+          const refresh = async ({ runBefore, runAfter }) => {
+            if (this.refreshingContent.get(handler)) {
+              return Promise.resolve();
+            }
+
+            this.refreshingContent.set(handler, true);
+
+            try {
+              await runBefore();
+              await this.markmapInstance.refreshTransform(
+                wrapElement,
+                this.lastPosition.get(handler),
+                true
+              );
+
+              if (runAfter) {
+                await runAfter();
+              }
+            } finally {
+              this.refreshingContent.set(handler, false);
+            }
+
+            return Promise.resolve();
+          };
+
+          // Since these features rendering time can vary,
+          // we want to display them as soon as possible in the composer.
+          const promises = [
+            refresh({
+              wrapElement,
+              runBefore: () => this.handleMermaid({ wrapElement, svg }),
+              runAfter: () =>
+                this.handleMermaid({
+                  wrapElement,
+                  svg,
+                  updateStyle: true,
+                }),
+            }),
+
+            refresh({
+              wrapElement,
+              runBefore: () => this.handleMath({ wrapElement, svg }),
+            }),
+          ];
+
+          Promise.all(promises).then(resolve);
+        } else {
+          later(
+            this,
+            () => {
+              if (this.isDestroyed || this.isDestroying) {
+                return;
+              }
+
+              const promises = [
+                this.handleMermaid({ wrapElement, svg }),
+                this.handleMath({ wrapElement, svg }),
+              ];
+
+              Promise.all(promises)
+                .then(resolve)
+                .finally(() => {
+                  this.handleMermaid({
+                    wrapElement,
+                    svg,
+                    updateStyle: true,
+                  });
+                });
+            },
+            this.markmapInstance.isFirstRender(handler) ? options.duration : 0
+          );
+        }
+      });
     });
   }
 
@@ -635,6 +709,10 @@ export default class MarkmapManager extends Service {
   }
 
   trackSvgPosition(handler, { transform }) {
+    if (!this.canTrackPosition.get(handler)) {
+      return;
+    }
+
     this.lastPosition.set(handler, transform);
   }
 
@@ -683,18 +761,21 @@ export default class MarkmapManager extends Service {
       : document.querySelector(".d-editor-preview") !== null;
   }
 
-  openOptionsModal(event) {
-    const currentTartget = event.currentTarget;
-    const handler = currentTartget.dataset.handler;
+  get inFullScreen() {
+    return document.querySelector(".d-modal.fullscreen-markmap-modal");
+  }
 
+  @bind
+  openOptionsModal(event) {
     this.modal.show(OptionsMarkmap, {
       model: {
-        handler,
+        element: event.currentTarget,
+        postId: this.currentPostId,
       },
     });
   }
 
-  insertOptionButtonOnPreview({ handler, svgWrapper }) {
+  insertOptionButtonOnPreview({ handler, index, svgWrapper }) {
     const optionsWrapper = document.createElement("button");
     optionsWrapper.classList.add(
       "btn",
@@ -703,46 +784,25 @@ export default class MarkmapManager extends Service {
       "markmap-options"
     );
     optionsWrapper.dataset.handler = handler;
+    optionsWrapper.dataset.index = index;
     optionsWrapper.innerHTML = iconHTML("cog");
-    optionsWrapper.addEventListener("click", this.openOptionsModal.bind(this), {
+    optionsWrapper.addEventListener("click", this.openOptionsModal, {
       passive: true,
     });
     svgWrapper.append(optionsWrapper);
   }
 
-  async refreshContent({
-    wrapElement,
-    handler,
-    isPreview,
-    runBefore,
-    runAfter,
-  }) {
-    await runBefore();
-
-    await this.markmapInstance.refreshTransform(
-      wrapElement,
-      this.lastPosition.get(handler),
-      isPreview
-    );
-
-    if (runAfter) {
-      await runAfter();
-    }
-  }
-
-  resetStateOnComposer(data) {
+  onComposerOpen(data) {
     document.querySelectorAll(".markmap-options").forEach((optionsWrapper) => {
-      optionsWrapper.removeEventListener(
-        "click",
-        this.openOptionsModal.bind(this),
-        {
-          passive: true,
-        }
-      );
+      optionsWrapper.removeEventListener("click", this.openOptionsModal, {
+        passive: true,
+      });
     });
 
     const postId = data.model?.post?.id;
     if (postId) {
+      this.currentPostId = postId;
+
       [this.lastPosition, this.foldNodesState].forEach((map) => {
         map.keys().forEach((key) => {
           if (key.startsWith("composer") || key.startsWith(`post_${postId}`)) {
@@ -751,10 +811,28 @@ export default class MarkmapManager extends Service {
         });
       });
     }
+    postId;
   }
 
-  uniqueKey(isPreview, post = null) {
-    return post && !isPreview ? `post_${post.id}` : "composer";
+  onComposerClose() {
+    [this.lastPosition, this.foldNodesState].forEach((map) => {
+      map.keys().forEach((key) => {
+        if (
+          key.startsWith("composer") ||
+          key.startsWith(`post_${this.currentPostId}`)
+        ) {
+          map.delete(key);
+        }
+      });
+    });
+
+    this.currentPostId = null;
+  }
+
+  uniqueKey({ isPreview, index, postId }) {
+    return postId && !isPreview
+      ? `post_${postId}.${index}`
+      : `composer.${index}`;
   }
 
   clear() {
@@ -766,5 +844,9 @@ export default class MarkmapManager extends Service {
     this.previousWrapElementInComposerMd5.clear();
     this.foldNodesState.clear();
     this.lastPosition.clear();
+    this.canTrackPosition.clear();
+    this.refreshingContent.clear();
+
+    this.currentPostId = null;
   }
 }

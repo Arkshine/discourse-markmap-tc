@@ -31,14 +31,23 @@ export default class MarkmapInstance extends Service {
     }
   }
 
+  resetRenderCounts(handlers) {
+    if (!Array.isArray(handlers)) {
+      handlers = [handlers];
+    }
+
+    for (const handler of handlers) {
+      this.renderCounts.set(handler, 0);
+    }
+  }
+
   clear() {
-    console.log("clear");
     this.instances.clear();
     this.renderCounts.clear();
+    this.dynamicOpts.clear();
   }
 
   isFirstRender(handler) {
-    //console.log("isFirstRender", handler, this.renderCounts.get(handler));
     return this.renderCounts.get(handler) === 1;
   }
 
@@ -64,6 +73,8 @@ export default class MarkmapInstance extends Service {
 
       // Custom
       maxHeight: "number",
+      index: "number",
+      postId: "string",
     };
 
     if (flags.useDefault) {
@@ -143,7 +154,7 @@ export default class MarkmapInstance extends Service {
     return root;
   }
 
-  async refreshTransform(wrapElement, lastPosition = null, isPreview) {
+  async refreshTransform(wrapElement, lastPosition = null) {
     const instance = this.lookup(wrapElement.dataset.handler);
     const options = this.deriveOptions(wrapElement.dataset);
     const { duration } = options;
@@ -153,43 +164,89 @@ export default class MarkmapInstance extends Service {
       duration: 0 /* Avoid transition effect if we force a refresh */,
     });
 
-    return instance.fit(lastPosition).then(async () => {
-      //console.log("wrapElement.dataset.autoFitHeight", instance.autoFitHeight);
-      if (!instance.autoFitHeight) {
-        //await this.autoFitHeight(instance, wrapElement, options);
-      }
+    let promise;
 
+    if (lastPosition) {
+      promise = instance.fit(lastPosition).then(async () => {});
+    } else {
+      promise = this.autoFitHeight(wrapElement, options, lastPosition);
+    }
+
+    return promise.then(() => {
       instance.setOptions({
         duration,
       });
     });
   }
 
-  async autoFitHeight(instance, wrapElement, options) {
-    const svg = wrapElement.nextElementSibling.querySelector("svg.markmap");
+  async autoFitHeight(wrapElement, options, lastPosition = null) {
+    const handler = wrapElement.dataset.handler;
+    const instance = this.lookup(handler);
 
-    svg.style.height = `${options.maxHeight}px`;
-    await instance.fit();
+    options = this.deriveOptions(options);
+    const { maxHeight, fitRatio, postId, index } = options;
 
-    const svgHeight = svg.getBoundingClientRect().height;
-    const gHeight =
-      svg.querySelector("g").getBoundingClientRect().height / options.fitRatio;
+    if (!instance) {
+      return null;
+    }
 
-    if (gHeight < options.maxHeight && gHeight < svgHeight) {
-      svg.style.height = `${gHeight}px`;
-      wrapElement.dataset.autoFitHeight = gHeight;
+    const svg = wrapElement.nextElementSibling?.querySelector("svg.markmap");
+    if (!svg) {
+      return null;
+    }
 
-      const handler = wrapElement.dataset.handler;
-      const dynamicOpts = this.dynamicOpts.get(handler) || {};
+    const autoFit = () => {
+      const svgHeight = svg.getBoundingClientRect().height;
+      const gHeight = Math.floor(
+        svg.querySelector("g").getBoundingClientRect().height / fitRatio
+      );
+
+      return {
+        needsUpdate: gHeight < maxHeight && gHeight < svgHeight,
+        newHeight: gHeight,
+      };
+    };
+
+    const updateAndFit = async (height) => {
+      svg.style.height = `${height}px`;
+      wrapElement.dataset.autoFitHeight = height;
+
+      let dynamicOpts = this.dynamicOpts.get(handler) || {};
       this.dynamicOpts.set(handler, {
         ...dynamicOpts,
-        autoFitHeight: true,
+        autoFitHeight: height,
       });
 
-      instance.autoFitHeight = true;
-      // console.log("instance", instance);
+      if (postId) {
+        const postHandler = this.markmapManager.uniqueKey({
+          index,
+          postId,
+        });
 
+        dynamicOpts = this.dynamicOpts.get(postHandler) || {};
+        this.dynamicOpts.set(postHandler, {
+          ...dynamicOpts,
+          autoFitHeight: height,
+        });
+      }
+
+      return instance.fit(lastPosition);
+    };
+
+    const autoFitHeight = this.dynamicOpts.get(handler)?.autoFitHeight;
+
+    if (autoFitHeight) {
+      const height = Math.min(autoFitHeight, maxHeight);
+      return updateAndFit(height);
+    } else {
+      svg.style.height = `${maxHeight}px`;
       await instance.fit();
+    }
+
+    const { needsUpdate, newHeight } = autoFit();
+
+    if (needsUpdate) {
+      return updateAndFit(newHeight);
     }
   }
 }

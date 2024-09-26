@@ -129,11 +129,11 @@ export class Markmap {
 
     this.zoom = window.d3
       .zoom()
-      /* fixed: Uncaught DOMException: Failed to read the 'value' property from 'SVGLength'
+      /* fixed: Uncaught DOMException: Failed to read the 'value' property from 'SVGLength' */
       .extent([
         [0, 0],
         [300, 300],
-      ])*/
+      ])
       .filter((event) => {
         if (this.options.scrollForPan) {
           // Pan with wheels, zoom with ctrl+wheels

@@ -43,21 +43,21 @@ class MarkmapInit {
         });
       });
 
-      api.decorateCookedElement((element, helper) => {
-        const isPreview = this.markmapManager.isPreview(element);
+      api.decorateCookedElement(
+        (element, helper) => {
+          const isPreview = this.markmapManager.isPreview(element);
 
-        if (!helper && !isPreview) {
-          return;
-        }
+          if (!helper && !isPreview) {
+            return;
+          }
 
-        const key = this.markmapManager.uniqueKey(
-          isPreview,
-          helper?.getModel()
-        );
-        const attrs = helper?.widget.attrs || {};
+          const attrs = helper?.widget.attrs || {};
+          const postId = helper?.getModel()?.id;
 
-        this.markmapManager.applyMarkmaps(element, key, isPreview, attrs);
-      });
+          this.markmapManager.applyMarkmaps(element, isPreview, postId, attrs);
+        },
+        { afterAdopt: true }
+      );
 
       api.modifyClass(
         "component:post-text-selection-toolbar",

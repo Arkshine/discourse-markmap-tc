@@ -75,8 +75,13 @@ export default class OptionsMarkmap extends Component {
     }
   }
 
+  get handler() {
+    const { element } = this.args.model;
+    return element.dataset.handler;
+  }
+
   get handlerIndex() {
-    return parseInt(this.args.model.handler.split(".")[1], 10);
+    return parseInt(this.handler.split(".")[1], 10);
   }
 
   get insideWrapMarkmap() {
@@ -95,24 +100,24 @@ export default class OptionsMarkmap extends Component {
   }
 
   get wrapElement() {
-    const handler = this.args.model.handler;
-
-    if (!handler) {
+    if (!this.handler) {
       return null;
     }
 
-    const svgWrapper = document.querySelector(`svg[data-handler="${handler}"]`);
-    const wrapElement = svgWrapper?.parentElement?.previousElementSibling;
+    const svgWrapper = document.querySelector(
+      `svg[data-handler="${this.handler}"]`
+    );
+    const element = svgWrapper?.parentElement?.previousElementSibling;
 
-    if (!wrapElement || wrapElement.dataset.wrap !== "markmap") {
+    if (!element || element.dataset.wrap !== "markmap") {
       return null;
     }
 
-    return wrapElement;
+    return element;
   }
 
   get edition() {
-    return !!this.args.model.handler || this.insideWrapMarkmap;
+    return !!this.args.model.wrapElement || this.insideWrapMarkmap;
   }
 
   get hasErrorOnEdition() {
@@ -167,6 +172,16 @@ export default class OptionsMarkmap extends Component {
     }
 
     if (this.edition) {
+      const { element, postId } = this.args.model;
+      const { index } = element.dataset;
+      const postHandler = this.markmapManager.uniqueKey({
+        isPreview: false,
+        index,
+        postId,
+      });
+
+      this.markmapInstance.resetRenderCounts([this.handler, postHandler]);
+
       const textArea = document.querySelector(
         ".d-editor-textarea-wrapper textarea"
       );
