@@ -74,8 +74,8 @@ class MarkmapInit {
           return;
         }
 
-        this.markmapManager.clear();
-        this.markmapInstance.clear();
+        this.markmapManager?.clear();
+        this.markmapInstance?.clear();
       });
     });
   }
