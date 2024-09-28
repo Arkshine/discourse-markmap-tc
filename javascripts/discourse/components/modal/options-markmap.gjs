@@ -22,6 +22,7 @@ export default class OptionsMarkmap extends Component {
   @tracked fieldTitle = "";
   @tracked fieldAutoFit = defaultOptions.autoFit;
   @tracked fieldMaxHeight;
+  @tracked fieldMaxWidth;
 
   markmapMatch;
   markmapOptions;
@@ -72,6 +73,7 @@ export default class OptionsMarkmap extends Component {
       this.fieldTitle = this.markmapOptions.title;
       this.fieldAutoFit = this.markmapOptions.autoFit;
       this.fieldMaxHeight = this.markmapOptions.maxHeight;
+      this.fieldMaxWidth = this.markmapOptions.maxWidth;
     }
   }
 
@@ -171,6 +173,10 @@ export default class OptionsMarkmap extends Component {
       options.push(`maxHeight=${this.fieldMaxHeight}`);
     }
 
+    if (this.fieldMaxWidth) {
+      options.push(`maxWidth=${this.fieldMaxWidth}`);
+    }
+
     if (this.edition) {
       const { element, postId } = this.args.model;
       const { index } = element.dataset;
@@ -181,6 +187,12 @@ export default class OptionsMarkmap extends Component {
       });
 
       this.markmapInstance.resetRenderCounts([this.handler, postHandler]);
+      this.markmapInstance.lookup(this.handler)?.setOptions({
+        title: this.fieldTitle,
+        autoFit: this.fieldAutoFit,
+        maxHeight: this.fieldMaxHeight,
+        maxWidth: this.fieldMaxWidth,
+      });
 
       const textArea = document.querySelector(
         ".d-editor-textarea-wrapper textarea"
@@ -263,6 +275,23 @@ export default class OptionsMarkmap extends Component {
                 }}</div>
               <TextField
                 @value={{this.fieldMaxHeight}}
+                @autofocus="autofocus"
+                @autocomplete="off"
+              />
+            </div>
+            <div class="options-markmap__input">
+              <label>
+                {{i18n (themePrefix "modal.options.form.max_node_width.label")}}
+              </label>
+              <div class="options-markmap__description">{{htmlSafe
+                  (i18n
+                    (themePrefix
+                      "modal.options.form.max_node_width.description"
+                    )
+                  )
+                }}</div>
+              <TextField
+                @value={{this.fieldMaxWidth}}
                 @autofocus="autofocus"
                 @autocomplete="off"
               />

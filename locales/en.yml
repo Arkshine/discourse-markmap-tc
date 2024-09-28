@@ -31,9 +31,14 @@ en:
         max_height:
           label: "Max Height"
           description: |
-            The maximum height of the Markmap.<br>
+            The maximum height (px) of the Markmap.<br>
             <span class="smalldesc">Height will auto fit if the natural Markmap's height is less than this Max Height.<br>
             The default value is 400 (px).</span>
+        max_node_width:
+          label: "Max Node Width"
+          description: |
+            The maximum node width (px).<br>
+            <span class="smalldesc">The default value is 0 (no limit).</span>
         auto_fit:
           label: "Auto Fit"
           description: |
