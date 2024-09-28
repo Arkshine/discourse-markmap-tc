@@ -200,7 +200,7 @@ export default class MarkmapManager extends Service {
     const lastPosition = this.lastPosition.get(handler);
 
     // Sets the data.
-    if (!svgWasLoaded) {
+    if (firstRender || !svgWasLoaded) {
       const transformedHtml = this.markmapInstance.transformHtml(wrapElement);
 
       if (firstRender) {
@@ -229,7 +229,7 @@ export default class MarkmapManager extends Service {
     }
 
     // Fixes a few Discourse features.
-    if (!svgWasLoaded) {
+    if (firstRender || !svgWasLoaded) {
       this.handleFeatures({
         wrapElement,
         svg,
@@ -255,7 +255,7 @@ export default class MarkmapManager extends Service {
         }
       });
     } else {
-      // Composer area
+      // SVG can be only loaded in composer context.
       if (firstRender) {
         this.markmapInstance.autoFitHeight(wrapElement, options);
       } else {
