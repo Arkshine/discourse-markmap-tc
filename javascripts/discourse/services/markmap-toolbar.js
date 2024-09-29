@@ -104,32 +104,34 @@ export default class MarkmapToolbar extends Service {
 
         svgWrapper.style.display = "none";
 
-        const regexSource = MARKMAP_COMMENT_REGEX.source;
+        /*const regexSource = MARKMAP_COMMENT_REGEX.source;
         const regexFlags = MARKMAP_COMMENT_REGEX.flags;
 
         wrapElement.innerHTML = wrapElement.innerHTML.replace(
           new RegExp(regexSource, regexFlags + "g"),
           ""
-        );
+        );*/
 
         wrapElement.classList.add("content-displayed");
         wrapElement.removeAttribute("aria-hidden");
         wrapElement.querySelector(".mm-toolbar")?.remove();
 
-        const svg = svgWrapper.querySelector("svg.markmap");
+        /*const svg = svgWrapper.querySelector("svg.markmap");
 
-        this.markmapManager.handleCheckbox({
-          wrapElement,
-          svg,
-          direction: "svgToWrap",
-        });
+        if (svg) {
+          this.markmapManager.handleCheckbox({
+            wrapElement,
+            svg,
+            direction: "svgToWrap",
+          });
 
-        this.markmapManager.handleTable({
-          wrapElement,
-          svg,
-          attrs,
-          direction: "svgToWrap",
-        });
+          this.markmapManager.handleTable({
+            wrapElement,
+            svg,
+            attrs,
+            direction: "svgToWrap",
+          });
+        }*/
 
         const toolbarContent = Toolbar.create(instance);
         wrapElement.insertBefore(toolbarContent.el, wrapElement.firstChild);
