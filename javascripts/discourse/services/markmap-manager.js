@@ -203,27 +203,34 @@ export default class MarkmapManager extends Service {
     }
 
     this.markmapInstance.trackRenderCount(handler);
-    this.markmapToolbar.insertToolbar(handler, svgWrapper, attrs);
+    this.markmapToolbar.insertToolbar({
+      handler,
+      svgWrapper,
+      isPreview,
+      attrs,
+    });
 
     // Events to track and restore fold nodes, and zoom/position.
     instance.hooks.toggleNode.tap(this.trackFoldNodes.bind(this, handler));
     instance.hooks.beforeRender.tap(this.restoreFoldNodes.bind(this, handler));
     instance.hooks.onZoom.tap(this.trackSvgPosition.bind(this, handler));
 
-    // Forces a refresh if the content inside [wrap] has changed.
     if (
       isPreview &&
       svgWasLoaded &&
       md5(wrapElement.innerHTML) !==
         this.previousWrapElementInComposerMd5.get(handler)
     ) {
-      svgWasLoaded = false;
+      // Forces a refresh if the content inside [wrap] has changed.
+      // Overwrites regardless if we are displaying the original content.
+      svgWasLoaded = this.markmapToolbar.contentDisplayed;
     }
 
     const firstRender = this.markmapInstance.isFirstRender(handler);
     const lastPosition = this.lastPosition.get(handler);
 
     // Sets the data.
+    // Always refresh the content on the first render.
     if (firstRender || !svgWasLoaded) {
       const transformedHtml = this.markmapInstance.transformHtml(wrapElement);
 
@@ -231,7 +238,7 @@ export default class MarkmapManager extends Service {
         instance.setData(transformedHtml);
         instance.fit();
       } else {
-        instance.setData(transformedHtml, { duration: 0 });
+        instance.setData(transformedHtml, { duration: 0 }); // Remove animation after the first render.
         instance
           .fit(lastPosition)
           .then(() => instance.setOptions({ duration: options.duration }));
@@ -252,6 +259,8 @@ export default class MarkmapManager extends Service {
       });
     }
 
+    let triggerScroll = false;
+
     // Fixes a few Discourse features.
     if (firstRender || !svgWasLoaded) {
       this.handleFeatures({
@@ -259,7 +268,6 @@ export default class MarkmapManager extends Service {
         svg,
         handler,
         isPreview,
-        inFullScreen: this.inFullScreen,
         options,
         attrs,
         instance,
@@ -276,6 +284,8 @@ export default class MarkmapManager extends Service {
           } else {
             this.canTrackPosition.set(handler, true);
           }
+
+          triggerScroll = true;
         }
       });
     } else {
@@ -285,20 +295,20 @@ export default class MarkmapManager extends Service {
       } else {
         instance.fit(this.lastPosition.get(handler));
       }
+
+      triggerScroll = true;
+    }
+
+    if (triggerScroll) {
+      document
+        .querySelector(".d-editor-input")
+        .dispatchEvent(new CustomEvent("scroll"));
     }
 
     return instance;
   }
 
-  handleFeatures({
-    wrapElement,
-    svg,
-    handler,
-    isPreview,
-    inFullScreen,
-    options,
-    attrs,
-  }) {
+  handleFeatures({ wrapElement, svg, handler, isPreview, options, attrs }) {
     // If we unfold a node, we need to reattach events.
     this.markmapInstance.lookup(handler)?.hooks.toggleNode.tap(({ expand }) => {
       if (expand) {
@@ -309,7 +319,7 @@ export default class MarkmapManager extends Service {
               return;
             }
 
-            if (!(isPreview || inFullScreen)) {
+            if (!(isPreview || this.inFullScreen)) {
               this.handleLightbox({ wrapElement });
               this.handleCheckbox({ wrapElement, svg });
               this.handleTable({ wrapElement, svg, attrs });
@@ -323,88 +333,82 @@ export default class MarkmapManager extends Service {
     });
 
     return new Promise((resolve) => {
-      // Delay a little to process after others components / plugins.
-      schedule("afterRender", async () => {
-        if (!(isPreview || inFullScreen)) {
-          this.handleLightbox({ wrapElement });
-          this.handleCheckbox({ wrapElement, svg });
-          this.handleTable({ wrapElement, svg, attrs });
-        }
+      if (!(isPreview || this.inFullScreen)) {
+        this.handleLightbox({ wrapElement });
+        this.handleCheckbox({ wrapElement, svg });
+        this.handleTable({ wrapElement, svg, attrs });
+      }
 
-        if (isPreview) {
-          const refresh = async ({ runBefore, runAfter }) => {
-            if (this.refreshingContent.get(handler)) {
-              return Promise.resolve();
-            }
-
-            this.refreshingContent.set(handler, true);
-
-            try {
-              await runBefore();
-              await this.markmapInstance.refreshTransform(
-                wrapElement,
-                this.lastPosition.get(handler),
-                true
-              );
-
-              if (runAfter) {
-                await runAfter();
-              }
-            } finally {
-              this.refreshingContent.set(handler, false);
-            }
-
+      if (isPreview) {
+        const refresh = async ({ runBefore, runAfter }) => {
+          if (this.refreshingContent.get(handler)) {
             return Promise.resolve();
-          };
+          }
 
-          // Since these features rendering time can vary,
-          // we want to display them as soon as possible in the composer.
-          const promises = [
-            refresh({
-              wrapElement,
-              runBefore: () => this.handleMermaid({ wrapElement, svg }),
-              runAfter: () =>
+          this.refreshingContent.set(handler, true);
+
+          await runBefore();
+          await this.markmapInstance.refreshTransform(
+            wrapElement,
+            this.lastPosition.get(handler)
+          );
+
+          if (runAfter) {
+            await runAfter();
+          }
+
+          this.refreshingContent.set(handler, false);
+
+          return Promise.resolve();
+        };
+
+        // Since these features rendering time can vary,
+        // we want to display them as soon as possible in the composer.
+        const promises = [
+          refresh({
+            wrapElement,
+            runBefore: () => this.handleMermaid({ wrapElement, svg }),
+            runAfter: () =>
+              this.handleMermaid({
+                wrapElement,
+                svg,
+                updateStyle: true,
+              }),
+          }),
+
+          refresh({
+            wrapElement,
+            runBefore: () => this.handleMath({ wrapElement, svg }),
+          }),
+        ];
+
+        Promise.all(promises).then(resolve);
+      } else {
+        later(
+          this,
+          () => {
+            if (this.isDestroyed || this.isDestroying) {
+              return;
+            }
+
+            const promises = [
+              this.handleMermaid({ wrapElement, svg }),
+              this.handleMath({ wrapElement, svg }),
+            ];
+
+            Promise.all(promises)
+              .then(resolve)
+              .finally(() => {
                 this.handleMermaid({
                   wrapElement,
                   svg,
                   updateStyle: true,
-                }),
-            }),
-
-            refresh({
-              wrapElement,
-              runBefore: () => this.handleMath({ wrapElement, svg }),
-            }),
-          ];
-
-          Promise.all(promises).then(resolve);
-        } else {
-          later(
-            this,
-            () => {
-              if (this.isDestroyed || this.isDestroying) {
-                return;
-              }
-
-              const promises = [
-                this.handleMermaid({ wrapElement, svg }),
-                this.handleMath({ wrapElement, svg }),
-              ];
-
-              Promise.all(promises)
-                .then(resolve)
-                .finally(() => {
-                  this.handleMermaid({
-                    wrapElement,
-                    svg,
-                    updateStyle: true,
-                  });
                 });
-            },
-            this.markmapInstance.isFirstRender(handler) ? options.duration : 0
-          );
-        }
-      });
+              });
+          },
+          this.markmapInstance.isFirstRender(handler) ? options.duration : 0
+        );
+      }
     });
   }
 
