@@ -187,7 +187,10 @@ export function parseHtml(html, opts = {}) {
         const result = MARKMAP_COMMENT_REGEX.exec(child.data);
         if (result) {
           child.nodeValue = child.nodeValue
-            .replace(result.groups.comment, "")
+            .replace(
+              result.groups.comment,
+              `<span class="hidden">${child.nodeValue}</span>`
+            )
             .trim();
           comments.push(result.groups.option);
         }
