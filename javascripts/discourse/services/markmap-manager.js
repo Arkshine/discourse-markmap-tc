@@ -13,6 +13,9 @@ import { md5 } from "../lib/discourse/md5";
 import { generateSpreadsheetModal } from "../lib/discourse/table";
 import { walkTree } from "../lib/markmap/common";
 
+const UID_POST_PREFIX = "post_";
+const UID_COMPOSER_PREFIX = "composer";
+
 export default class MarkmapManager extends Service {
   @service modal;
   @service siteSettings;
@@ -836,7 +839,10 @@ export default class MarkmapManager extends Service {
 
       [this.lastPosition, this.foldNodesState].forEach((map) => {
         map.keys().forEach((key) => {
-          if (key.startsWith("composer") || key.startsWith(`post_${postId}`)) {
+          if (
+            key.startsWith(UID_COMPOSER_PREFIX) ||
+            key.startsWith(`post_${postId}`)
+          ) {
             map.delete(key);
           }
         });
@@ -846,11 +852,17 @@ export default class MarkmapManager extends Service {
   }
 
   onComposerClose() {
+    this.canTrackPosition.keys().forEach((key) => {
+      if (key.startsWith(UID_COMPOSER_PREFIX)) {
+        this.canTrackPosition.delete(key);
+      }
+    });
+
     [this.lastPosition, this.foldNodesState].forEach((map) => {
       map.keys().forEach((key) => {
         if (
-          key.startsWith("composer") ||
-          key.startsWith(`post_${this.currentPostId}`)
+          key.startsWith(UID_COMPOSER_PREFIX) ||
+          key.startsWith(`${UID_POST_PREFIX}${this.currentPostId}`)
         ) {
           map.delete(key);
         }
@@ -862,8 +874,8 @@ export default class MarkmapManager extends Service {
 
   uniqueKey({ isPreview, index, postId }) {
     return postId && !isPreview
-      ? `post_${postId}.${index}`
-      : `composer.${index}`;
+      ? `${UID_POST_PREFIX}${postId}.${index}`
+      : `${UID_COMPOSER_PREFIX}.${index}`;
   }
 
   clear() {
