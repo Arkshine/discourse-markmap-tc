@@ -116,6 +116,27 @@ export default class MarkmapManager extends Service {
     wrapElement.dataset.handler = handler;
     wrapElement.dataset.processed = true;
 
+    this.markmapToolbar.insertToolbar({
+      handler,
+      svgWrapper,
+      isPreview,
+      attrs,
+    });
+
+    if (this.markmapToolbar.contentDisplayed) {
+      wrapElement.classList.add("content-displayed");
+
+      if (
+        md5(wrapElement.innerHTML) !==
+        this.previousWrapElementInComposerMd5.get(handler)
+      ) {
+        document
+          .querySelector(".d-editor-input")
+          .dispatchEvent(new CustomEvent("scroll"));
+      }
+      return;
+    }
+
     return this.createMarkmap({
       wrapElement,
       svgWrapper,
@@ -430,7 +451,7 @@ export default class MarkmapManager extends Service {
       } else {
         // This is a workaround to avoid hidden images in [wrap=markmap] element to appear in the lightbox.
         // It's easier to remove any duplicated images when the lightbox is opened,
-        // rather than renaming element classnames or calling cleanupLightboxes() then calling setupLightboxes()
+        // rather than renaming element classnames or calling cleanupLightboxes() then setupLightboxes()
         // with a custom selector depending on whenever decorateCookedElement() here is called.
         this.appEvents.on(
           LIGHTBOX_APP_EVENT_NAMES.OPEN,
@@ -777,7 +798,6 @@ export default class MarkmapManager extends Service {
 
   @bind
   openOptionsModal(event) {
-    console.log("event.currentTarget", event.currentTarget);
     this.modal.show(OptionsMarkmap, {
       model: {
         element: event.currentTarget,

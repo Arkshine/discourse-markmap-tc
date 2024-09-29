@@ -12,7 +12,7 @@ export default class MarkmapToolbar extends Service {
 
   @tracked contentDisplayed = false;
 
-  insertToolbar(handler, svgWrapper, attrs = {}) {
+  insertToolbar({ handler, svgWrapper, isPreview, attrs }) {
     if (svgWrapper.querySelector(".mm-toolbar")) {
       return;
     }
@@ -112,9 +112,7 @@ export default class MarkmapToolbar extends Service {
           ""
         );
 
-        wrapElement.style.position = "relative";
-        wrapElement.style.visibility = "visible";
-        wrapElement.style.left = "unset";
+        wrapElement.classList.add("content-displayed");
         wrapElement.removeAttribute("aria-hidden");
         wrapElement.querySelector(".mm-toolbar")?.remove();
 
@@ -145,11 +143,12 @@ export default class MarkmapToolbar extends Service {
 
             svgWrapper.style.display = "block";
 
-            wrapElement.style.position = "absolute";
-            wrapElement.style.visibility = "hidden";
-            wrapElement.style.left = "-9999px";
-
+            wrapElement.classList.remove("content-displayed");
             wrapElement.querySelector(".mm-toolbar")?.remove();
+
+            this.markmapInstance.refreshTransform(
+              svgWrapper.previousElementSibling
+            );
           },
         });
 
@@ -167,5 +166,13 @@ export default class MarkmapToolbar extends Service {
     }
 
     toolbar.setItems(items);
+
+    if (this.contentDisplayed) {
+      toolbar.registry["show-content"].onClick();
+    }
+
+    if (!isPreview) {
+      this.contentDisplayed = false;
+    }
   }
 }

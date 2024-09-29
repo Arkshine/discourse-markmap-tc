@@ -156,6 +156,10 @@ export default class MarkmapInstance extends Service {
 
   async refreshTransform(wrapElement, lastPosition = null) {
     const instance = this.lookup(wrapElement.dataset.handler);
+    if (!instance) {
+      return;
+    }
+
     const options = this.deriveOptions(wrapElement.dataset);
     const { duration } = options;
 
