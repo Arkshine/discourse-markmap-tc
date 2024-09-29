@@ -333,82 +333,84 @@ export default class MarkmapManager extends Service {
     });
 
     return new Promise((resolve) => {
-      if (!(isPreview || this.inFullScreen)) {
-        this.handleLightbox({ wrapElement });
-        this.handleCheckbox({ wrapElement, svg });
-        this.handleTable({ wrapElement, svg, attrs });
-      }
+      schedule("afterRender", () => {
+        if (!(isPreview || this.inFullScreen)) {
+          this.handleLightbox({ wrapElement });
+          this.handleCheckbox({ wrapElement, svg });
+          this.handleTable({ wrapElement, svg, attrs });
+        }
 
-      if (isPreview) {
-        const refresh = async ({ runBefore, runAfter }) => {
-          if (this.refreshingContent.get(handler)) {
-            return Promise.resolve();
-          }
-
-          this.refreshingContent.set(handler, true);
-
-          await runBefore();
-          await this.markmapInstance.refreshTransform(
-            wrapElement,
-            this.lastPosition.get(handler)
-          );
-
-          if (runAfter) {
-            await runAfter();
-          }
-
-          this.refreshingContent.set(handler, false);
-
-          return Promise.resolve();
-        };
-
-        // Since these features rendering time can vary,
-        // we want to display them as soon as possible in the composer.
-        const promises = [
-          refresh({
-            wrapElement,
-            runBefore: () => this.handleMermaid({ wrapElement, svg }),
-            runAfter: () =>
-              this.handleMermaid({
-                wrapElement,
-                svg,
-                updateStyle: true,
-              }),
-          }),
-
-          refresh({
-            wrapElement,
-            runBefore: () => this.handleMath({ wrapElement, svg }),
-          }),
-        ];
-
-        Promise.all(promises).then(resolve);
-      } else {
-        later(
-          this,
-          () => {
-            if (this.isDestroyed || this.isDestroying) {
-              return;
+        if (isPreview) {
+          const refresh = async ({ runBefore, runAfter }) => {
+            if (this.refreshingContent.get(handler)) {
+              return Promise.resolve();
             }
 
-            const promises = [
-              this.handleMermaid({ wrapElement, svg }),
-              this.handleMath({ wrapElement, svg }),
-            ];
+            this.refreshingContent.set(handler, true);
 
-            Promise.all(promises)
-              .then(resolve)
-              .finally(() => {
+            await runBefore();
+            await this.markmapInstance.refreshTransform(
+              wrapElement,
+              this.lastPosition.get(handler)
+            );
+
+            if (runAfter) {
+              await runAfter();
+            }
+
+            this.refreshingContent.set(handler, false);
+
+            return Promise.resolve();
+          };
+
+          // Since these features rendering time can vary,
+          // we want to display them as soon as possible in the composer.
+          const promises = [
+            refresh({
+              wrapElement,
+              runBefore: () => this.handleMermaid({ wrapElement, svg }),
+              runAfter: () =>
                 this.handleMermaid({
                   wrapElement,
                   svg,
                   updateStyle: true,
+                }),
+            }),
+
+            refresh({
+              wrapElement,
+              runBefore: () => this.handleMath({ wrapElement, svg }),
+            }),
+          ];
+
+          Promise.all(promises).then(resolve);
+        } else {
+          later(
+            this,
+            () => {
+              if (this.isDestroyed || this.isDestroying) {
+                return;
+              }
+
+              const promises = [
+                this.handleMermaid({ wrapElement, svg }),
+                this.handleMath({ wrapElement, svg }),
+              ];
+
+              Promise.all(promises)
+                .then(resolve)
+                .finally(() => {
+                  this.handleMermaid({
+                    wrapElement,
+                    svg,
+                    updateStyle: true,
+                  });
                 });
-              });
-          },
-          this.markmapInstance.isFirstRender(handler) ? options.duration : 0
-        );
-      }
+            },
+            this.markmapInstance.isFirstRender(handler) ? options.duration : 0
+          );
+        }
+      });
     });
   }
 
@@ -845,7 +847,7 @@ export default class MarkmapManager extends Service {
         map.keys().forEach((key) => {
           if (
             key.startsWith(UID_COMPOSER_PREFIX) ||
-            key.startsWith(`post_${postId}`)
+            key.startsWith(`${UID_POST_PREFIX}${postId}`)
           ) {
             map.delete(key);
           }

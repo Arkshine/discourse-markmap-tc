@@ -613,7 +613,7 @@ export class Markmap {
         (exit) => exit.remove()
       )
       .attr("width", (d) =>
-        Math.max(0, d.ySize - spacingHorizontal - paddingX * 2)
+        Math.max(0, d.ySize - spacingHorizontal - paddingX * 2 + 10)
       )
       .attr("height", (d) => d.xSize);
 
