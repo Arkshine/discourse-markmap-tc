@@ -8,6 +8,7 @@ import { clsActive, clsToolbarItem, Toolbar } from "../lib/markmap/toolbar";
 export default class MarkmapToolbar extends Service {
   @service modal;
   @service markmapInstance;
+  @service markmapManager;
 
   @tracked contentDisplayed = false;
 
@@ -114,7 +115,23 @@ export default class MarkmapToolbar extends Service {
         wrapElement.style.position = "relative";
         wrapElement.style.visibility = "visible";
         wrapElement.style.left = "unset";
+        wrapElement.removeAttribute("aria-hidden");
         wrapElement.querySelector(".mm-toolbar")?.remove();
+
+        const svg = svgWrapper.querySelector("svg.markmap");
+
+        this.markmapManager.handleCheckbox({
+          wrapElement,
+          svg,
+          direction: "svgToWrap",
+        });
+
+        this.markmapManager.handleTable({
+          wrapElement,
+          svg,
+          attrs,
+          direction: "svgToWrap",
+        });
 
         const toolbarContent = Toolbar.create(instance);
         wrapElement.insertBefore(toolbarContent.el, wrapElement.firstChild);

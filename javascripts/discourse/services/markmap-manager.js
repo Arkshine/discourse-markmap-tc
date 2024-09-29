@@ -458,32 +458,38 @@ export default class MarkmapManager extends Service {
   /**
    * Handles the checkbox events in the SVG foreign element.
    */
-  handleCheckbox({ wrapElement, svg }) {
+  handleCheckbox({ wrapElement, svg, direction = "wrapToSvg" }) {
     if (!this.siteSettings.checklist_enabled) {
       return;
     }
 
-    const checkboxElements = wrapElement.querySelectorAll(".chcklst-box");
+    const checkboxElementsInSvg = Array.from(
+      svg.querySelectorAll("foreignObject .chcklst-box")
+    );
+    const checkboxElements = Array.from(
+      wrapElement.querySelectorAll(".chcklst-box")
+    );
 
-    if (!checkboxElements.length) {
+    if (!checkboxElements.length || !checkboxElementsInSvg.length) {
       return;
     }
 
-    const checkboxElementsInSvg = Array.from(
-      svg.querySelectorAll(`foreignObject .chcklst-box`)
-    );
+    const [sourceElements, targetElements] =
+      direction === "wrapToSvg"
+        ? [checkboxElements, checkboxElementsInSvg]
+        : [checkboxElementsInSvg, checkboxElements];
 
-    checkboxElements.forEach((checkboxElement) => {
-      if (!checkboxElement.onclick) {
+    sourceElements.forEach((sourceElement) => {
+      if (!sourceElement.onclick) {
         return;
       }
 
-      const checkboxInSvg = checkboxElementsInSvg.find(
-        (el) => el.dataset.index === checkboxElement.dataset.index
+      const targetElement = targetElements.find(
+        (el) => el.dataset.index === sourceElement.dataset.index
       );
 
-      if (checkboxInSvg) {
-        checkboxInSvg.onclick = checkboxElement.onclick;
+      if (targetElement) {
+        targetElement.onclick = sourceElement.onclick;
       }
     });
   }
@@ -491,9 +497,13 @@ export default class MarkmapManager extends Service {
   /**
    * Handles the table click event to edit in a modal.
    */
-  handleTable({ svg, attrs }) {
-    svg.querySelectorAll(".md-table").forEach((table) => {
-      // Restores the edit button event.
+  handleTable({ wrapElement, svg, attrs, direction = "wrapToSvg" }) {
+    const sourceElements =
+      direction === "wrapToSvg"
+        ? svg.querySelectorAll(".md-table")
+        : wrapElement.querySelectorAll(".md-table");
+
+    sourceElements.forEach((table) => {
       const buttonElement = table.querySelector(
         ".fullscreen-table-wrapper__buttons > button"
       );
@@ -767,6 +777,7 @@ export default class MarkmapManager extends Service {
 
   @bind
   openOptionsModal(event) {
+    console.log("event.currentTarget", event.currentTarget);
     this.modal.show(OptionsMarkmap, {
       model: {
         element: event.currentTarget,
